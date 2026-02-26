@@ -1,0 +1,31 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc"/>
+      <stop offset="100%" style="stop-color:#e0f2fe"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0EA5E9"/>
+      <stop offset="100%" style="stop-color:#6366F1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="6" fill="url(#accent)"/>
+
+  <!-- Title -->
+  <text x="600" y="200" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="64" font-weight="800" fill="#1E293B">Health Pro CEO</text>
+  <text x="600" y="280" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="56" font-weight="700" fill="url(#accent)">Scaling Roadmap</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="360" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="28" fill="#64748B">Free Business Health Diagnosis in Under 3 Minutes</text>
+
+  <!-- Features -->
+  <text x="600" y="440" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="22" fill="#94A3B8">Bottleneck Diagnosis  ·  4 Custom Playbooks  ·  90-Day Action Plan</text>
+
+  <!-- CTA -->
+  <rect x="420" y="480" width="360" height="60" rx="12" fill="url(#accent)"/>
+  <text x="600" y="520" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="24" font-weight="600" fill="white">Get Your Free Roadmap →</text>
+
+  <!-- Footer -->
+  <text x="600" y="600" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="18" fill="#CBD5E1">Used by 5,000+ health professionals</text>
+</svg>

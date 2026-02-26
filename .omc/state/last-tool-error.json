@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"/Users/emekaajufo/.npm-global/bin/railway version 2>&1\",\"description\":\"Run Railway CLI directly\"}",
+  "error": "Exit code 1\nerror: unrecognized subcommand 'version'\n\n  tip: a similar subcommand exists: 'vars'\n\nUsage: railway [COMMAND]\n\nFor more information, try '--help'.\n\n\nerror: unrecognized subcommand 'version'\n\n  tip: a similar subcommand exists: 'vars'\n\nUsage: railway [COMMAND]\n\nFor more information, try '--help'.",
+  "timestamp": "2026-02-26T17:06:16.126Z",
+  "retry_count": 2
+}

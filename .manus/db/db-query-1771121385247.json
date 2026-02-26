@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, shareCode, businessName FROM roadmaps WHERE shareCode IS NOT NULL ORDER BY createdAt DESC LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 33SnFdKKKChXdDb.57e91fc65cf3 --database VpwDNTczi26yJvvzQBaFT4 --execute SELECT id, shareCode, businessName FROM roadmaps WHERE shareCode IS NOT NULL ORDER BY createdAt DESC LIMIT 1;",
+  "rows": [
+    {
+      "id": "90002",
+      "shareCode": "nbb1hw",
+      "businessName": "Test Clinic"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tshareCode\tbusinessName\n90002\tnbb1hw\tTest Clinic\n",
+  "stderr": "",
+  "execution_time_ms": 226
+}

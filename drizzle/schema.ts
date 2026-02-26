@@ -1,0 +1,112 @@
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+
+/**
+ * Core user table backing auth flow.
+ * Extend this file with additional tables as your product grows.
+ * Columns use camelCase to match both database fields and generated types.
+ */
+export const users = mysqlTable("users", {
+  /**
+   * Surrogate primary key. Auto-incremented numeric value managed by the database.
+   * Use this for relations between tables.
+   */
+  id: int("id").autoincrement().primaryKey(),
+  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
+  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  name: text("name"),
+  email: varchar("email", { length: 320 }),
+  loginMethod: varchar("loginMethod", { length: 64 }),
+  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+
+// Roadmaps table - stores generated scaling roadmaps
+export const roadmaps = mysqlTable("roadmaps", {
+  id: int("id").autoincrement().primaryKey(),
+  // Quiz responses
+  firstName: varchar("firstName", { length: 255 }).notNull(),
+  businessName: varchar("businessName", { length: 255 }).notNull(),
+  businessType: varchar("businessType", { length: 255 }).notNull(),
+  industry: varchar("industry", { length: 100 }), // Selected from landing page
+  email: varchar("email", { length: 320 }).notNull(),
+  monthlyRevenue: varchar("monthlyRevenue", { length: 100 }),
+  mainOffer: text("mainOffer"),
+  crmUsage: varchar("crmUsage", { length: 255 }),
+  leadResponseSpeed: varchar("leadResponseSpeed", { length: 255 }),
+  missedLeads: varchar("missedLeads", { length: 100 }),
+  chatAgents: varchar("chatAgents", { length: 255 }),
+  contentFrequency: varchar("contentFrequency", { length: 100 }),
+  audienceSize: varchar("audienceSize", { length: 100 }),
+  instagramHandle: varchar("instagramHandle", { length: 255 }),
+  monthlyAdBudget: varchar("monthlyAdBudget", { length: 100 }),
+  ninetyDayGoal: text("ninetyDayGoal"),
+  biggestFrustration: text("biggestFrustration"),
+  phone: varchar("phone", { length: 50 }),
+  website: varchar("website", { length: 500 }),
+  // All quiz answers as JSON
+  allAnswers: text("allAnswers"),
+  
+  // Calculated Scores (0-100)
+  overallScore: int("overallScore").default(0).notNull(),
+  operationsScore: int("operationsScore").default(0).notNull(),
+  marketingScore: int("marketingScore").default(0).notNull(),
+  salesScore: int("salesScore").default(0).notNull(),
+  systemsScore: int("systemsScore").default(0).notNull(),
+  
+  // Benchmark data
+  industryAverage: int("industryAverage").default(65).notNull(),
+  topPerformerScore: int("topPerformerScore").default(88).notNull(),
+  userPercentile: int("userPercentile").default(50).notNull(),
+  
+  // Insights
+  topStrength: varchar("topStrength", { length: 255 }),
+  biggestGap: varchar("biggestGap", { length: 255 }),
+  potentialRevenue: int("potentialRevenue").default(0).notNull(),
+  
+  // Generated content
+  titanRoadmap: text("titanRoadmap"),
+  offerPlaybook: text("offerPlaybook"),
+  facebookAdLaunch: text("facebookAdLaunch"),
+  instagramGrowth: text("instagramGrowth"),
+  leadGeneration: text("leadGeneration"),
+  status: mysqlEnum("status", ["new", "contacted", "qualified", "converted"]).default("new").notNull(),
+  leadScore: int("leadScore").default(0).notNull(),
+  shareCode: varchar("shareCode", { length: 10 }).unique(),
+  viewCount: int("viewCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Roadmap = typeof roadmaps.$inferSelect;
+export type InsertRoadmap = typeof roadmaps.$inferInsert;
+
+// Task Progress table - tracks which action items users have completed
+export const taskProgress = mysqlTable("taskProgress", {
+  id: int("id").autoincrement().primaryKey(),
+  roadmapId: int("roadmapId").notNull(), // Foreign key to roadmaps table
+  playbookType: varchar("playbookType", { length: 50 }).notNull(), // "titan", "offer", "facebook", "instagram", "leadgen"
+  taskId: varchar("taskId", { length: 255 }).notNull(), // Unique identifier for the task (e.g., "week1_day1_task1")
+  completed: int("completed").default(0).notNull(), // 0 = incomplete, 1 = complete
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type TaskProgress = typeof taskProgress.$inferSelect;
+export type InsertTaskProgress = typeof taskProgress.$inferInsert;
+
+// Playbook Share Tokens table - generates unique shareable links for individual playbooks
+export const playbookShareTokens = mysqlTable("playbookShareTokens", {
+  id: int("id").autoincrement().primaryKey(),
+  roadmapId: int("roadmapId").notNull(), // Foreign key to roadmaps table
+  playbookType: varchar("playbookType", { length: 50 }).notNull(), // "titan", "offer", "facebook", "instagram", "leadgen"
+  token: varchar("token", { length: 32 }).notNull().unique(), // Unique shareable token
+  viewCount: int("viewCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PlaybookShareToken = typeof playbookShareTokens.$inferSelect;
+export type InsertPlaybookShareToken = typeof playbookShareTokens.$inferInsert;

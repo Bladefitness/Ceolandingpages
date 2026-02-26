@@ -1,0 +1,1 @@
+ALTER TABLE `roadmaps` ADD `leadScore` int DEFAULT 0 NOT NULL;

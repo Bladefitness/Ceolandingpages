@@ -1,0 +1,1 @@
+ALTER TABLE `roadmaps` ADD `industry` varchar(100);

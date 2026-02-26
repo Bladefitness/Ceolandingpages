@@ -1,0 +1,418 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ═══════════════════════════════════════════
+   TITAN DASHBOARD — APPLE-INSPIRED DESIGN SYSTEM
+   Blue/White Professional Healthcare Platform
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* ── PRIMARY COLORS ── */
+  --titan-blue:        #0EA5E9;   /* Electric Blue - Primary actions, links */
+  --titan-indigo:      #6366F1;   /* Indigo - Accent, gradients */
+  --titan-green:       #10B981;   /* Emerald - Success states, positive metrics */
+  --titan-gold:        #D4A017;   /* Gold - CTA accent, matches logo */
+  --titan-gold-hover:  #B8860B;   /* Dark gold - Hover state */
+
+  /* ── NEUTRAL COLORS ── */
+  --titan-white:       #FFFFFF;   /* Pure white - Cards, buttons */
+  --titan-background:  #FAFBFC;   /* Off-white - Page background */
+  --titan-text-primary:   #1E293B;   /* Deep charcoal - Headings, body text */
+  --titan-text-secondary: #64748B;   /* Slate gray - Secondary text, labels */
+  --titan-text-muted:     #94A3B8;   /* Light slate - Disabled text, placeholders */
+  --titan-border:         #E2E8F0;   /* Light gray - Borders, dividers */
+  --titan-border-hover:   #CBD5E1;   /* Medium gray - Hover state borders */
+
+  /* ── GRADIENTS ── */
+  --titan-grad-primary:     linear-gradient(135deg, #0EA5E9 0%, #6366F1 100%);
+  --titan-grad-background:  linear-gradient(135deg, rgba(14, 165, 233, 0.02) 0%, rgba(99, 102, 241, 0.02) 100%);
+  --titan-grad-hover:       linear-gradient(135deg, rgba(14, 165, 233, 0.9) 0%, rgba(99, 102, 241, 0.9) 100%);
+
+  /* ── SHADOWS (3-Level System) ── */
+  --titan-shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.08);
+  --titan-shadow-md:  0 4px 12px rgba(0, 0, 0, 0.12);
+  --titan-shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.15);
+
+  /* ── TYPOGRAPHY SYSTEM ── */
+  --titan-font-base: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Type Scale */
+  --titan-size-display: 56px;
+  --titan-size-h1:      40px;
+  --titan-size-h2:      32px;
+  --titan-size-h3:      24px;
+  --titan-size-body-lg: 18px;
+  --titan-size-body:    16px;
+  --titan-size-body-sm: 14px;
+  --titan-size-caption: 12px;
+
+  /* Font Weights */
+  --titan-weight-regular:  400;
+  --titan-weight-medium:   500;
+  --titan-weight-semibold: 600;
+  --titan-weight-bold:     700;
+
+  /* Line Heights */
+  --titan-leading-tight:   1.2;
+  --titan-leading-normal:  1.4;
+  --titan-leading-relaxed: 1.5;
+
+  /* Letter Spacing */
+  --titan-tracking-tight:  -0.02em;
+  --titan-tracking-normal: -0.01em;
+  --titan-tracking-wide:   0;
+
+  /* ── SPACING SYSTEM (8px Grid) ── */
+  --titan-space-xs:   4px;
+  --titan-space-sm:   8px;
+  --titan-space-md:   16px;
+  --titan-space-lg:   24px;
+  --titan-space-xl:   32px;
+  --titan-space-2xl:  48px;
+  --titan-space-3xl:  64px;
+  --titan-space-4xl:  96px;
+
+  /* ── BORDER RADIUS ── */
+  --titan-radius-sm:  6px;
+  --titan-radius-md:  8px;
+  --titan-radius-lg:  12px;
+  --titan-radius-xl:  16px;
+  --titan-radius-full: 9999px;
+
+  /* ── ANIMATION TIMING ── */
+  --titan-duration-instant: 100ms;
+  --titan-duration-fast:    150ms;
+  --titan-duration-normal:  200ms;
+  --titan-duration-slow:    300ms;
+  --titan-duration-slower:  500ms;
+
+  --titan-ease-out:    cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --titan-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --titan-ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
+
+  /* ── Map Titan colors to Tailwind semantic tokens ── */
+  --radius: var(--titan-radius-md);
+  --background: var(--titan-background);
+  --foreground: var(--titan-text-primary);
+  --card: var(--titan-white);
+  --card-foreground: var(--titan-text-primary);
+  --popover: var(--titan-white);
+  --popover-foreground: var(--titan-text-primary);
+  --primary: var(--titan-blue);
+  --primary-foreground: var(--titan-white);
+  --secondary: var(--titan-white);
+  --secondary-foreground: var(--titan-blue);
+  --muted: var(--titan-background);
+  --muted-foreground: var(--titan-text-muted);
+  --accent: var(--titan-blue);
+  --accent-foreground: var(--titan-white);
+  --destructive: #EF4444;
+  --destructive-foreground: var(--titan-white);
+  --border: var(--titan-border);
+  --input: var(--titan-white);
+  --ring: var(--titan-blue);
+  --sidebar: var(--titan-white);
+  --sidebar-foreground: var(--titan-text-primary);
+  --sidebar-primary: var(--titan-blue);
+  --sidebar-primary-foreground: var(--titan-white);
+  --sidebar-accent: var(--titan-background);
+  --sidebar-accent-foreground: var(--titan-text-primary);
+  --sidebar-border: var(--titan-border);
+  --sidebar-ring: var(--titan-blue);
+  --chart-1: var(--titan-blue);
+  --chart-2: var(--titan-indigo);
+  --chart-3: var(--titan-green);
+  --chart-4: #3B82F6;
+  --chart-5: #8B5CF6;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--titan-font-base);
+    font-size: var(--titan-size-body);
+    line-height: var(--titan-leading-relaxed);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--titan-grad-background);
+  }
+
+  h1 {
+    font-family: var(--titan-font-base);
+    font-size: var(--titan-size-h1);
+    font-weight: var(--titan-weight-bold);
+    letter-spacing: var(--titan-tracking-tight);
+    line-height: var(--titan-leading-tight);
+    color: var(--titan-text-primary);
+  }
+
+  h2 {
+    font-family: var(--titan-font-base);
+    font-size: var(--titan-size-h2);
+    font-weight: var(--titan-weight-semibold);
+    letter-spacing: var(--titan-tracking-normal);
+    line-height: var(--titan-leading-tight);
+    color: var(--titan-text-primary);
+  }
+
+  h3 {
+    font-family: var(--titan-font-base);
+    font-size: var(--titan-size-h3);
+    font-weight: var(--titan-weight-semibold);
+    letter-spacing: var(--titan-tracking-normal);
+    line-height: var(--titan-leading-normal);
+    color: var(--titan-text-primary);
+  }
+
+  h4, h5, h6 {
+    font-family: var(--titan-font-base);
+    font-weight: var(--titan-weight-semibold);
+    color: var(--titan-text-primary);
+  }
+
+  /* Cursor pointer for interactive elements */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+
+  /* Focus states for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid var(--titan-blue);
+    outline-offset: 2px;
+    border-radius: var(--titan-radius-md);
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@layer components {
+  /* ── CONTAINER UTILITY ── */
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      max-width: 1280px;
+    }
+  }
+
+  /* ── BUTTON MICRO-INTERACTIONS ── */
+  button, [role="button"], [type="button"], [type="submit"] {
+    transition: all var(--titan-duration-fast) var(--titan-ease-out);
+  }
+
+  button:hover:not(:disabled), 
+  [role="button"]:hover:not([aria-disabled="true"]) {
+    transform: translateY(-1px);
+  }
+
+  button:active:not(:disabled),
+  [role="button"]:active:not([aria-disabled="true"]) {
+    transform: scale(0.98);
+    transition-duration: var(--titan-duration-instant);
+  }
+
+  /* ── CARD SYSTEM ── */
+  .card {
+    background: var(--titan-white);
+    border-radius: var(--titan-radius-lg);
+    box-shadow: var(--titan-shadow-sm);
+    transition: transform var(--titan-duration-normal) var(--titan-ease-out),
+                box-shadow var(--titan-duration-normal) var(--titan-ease-out);
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--titan-shadow-md);
+  }
+
+  /* ── INPUT FIELDS ── */
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    background: var(--titan-white);
+    border: 1px solid var(--titan-border);
+    border-radius: var(--titan-radius-md);
+    transition: border-color var(--titan-duration-fast) var(--titan-ease-out),
+                box-shadow var(--titan-duration-fast) var(--titan-ease-out);
+  }
+
+  input:focus:not([type="checkbox"]):not([type="radio"]),
+  textarea:focus,
+  select:focus {
+    border-color: var(--titan-blue);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    outline: none;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--titan-text-muted);
+  }
+
+  /* ── GRADIENT BUTTON ── */
+  .btn-gradient {
+    background: var(--titan-grad-primary);
+    color: var(--titan-white);
+    border: none;
+    box-shadow: var(--titan-shadow-sm);
+    transition: all var(--titan-duration-fast) var(--titan-ease-out);
+  }
+
+  .btn-gradient:hover:not(:disabled) {
+    opacity: 0.9;
+    box-shadow: var(--titan-shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .btn-gradient:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    height: 8px;
+    background: var(--titan-border);
+    border-radius: var(--titan-radius-full);
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--titan-grad-primary);
+    border-radius: var(--titan-radius-full);
+    transition: width var(--titan-duration-slower) var(--titan-ease-spring);
+  }
+}
+
+/* ── MOBILE RESPONSIVE FIXES ── */
+.prose pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.prose {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+@media (max-width: 640px) {
+  .prose p {
+    font-size: 0.875rem;
+  }
+  
+  .prose {
+    overflow-x: hidden;
+  }
+  
+  .prose p {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .prose p::-webkit-scrollbar {
+    height: 2px;
+  }
+  
+  .prose p::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 233, 0.3);
+    border-radius: 2px;
+  }
+
+  /* Reduce spacing on mobile */
+  h1 {
+    font-size: var(--titan-size-h2);
+  }
+
+  h2 {
+    font-size: var(--titan-size-h3);
+  }
+}
+
+/* ── ACCESSIBILITY: REDUCED MOTION ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

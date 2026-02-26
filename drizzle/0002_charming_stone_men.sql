@@ -1,0 +1,1 @@
+ALTER TABLE `roadmaps` ADD `status` enum('new','contacted','qualified','converted') DEFAULT 'new' NOT NULL;

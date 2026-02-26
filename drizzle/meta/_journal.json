@@ -1,0 +1,62 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1771036677119,
+      "tag": "0000_smiling_sage",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1771045419822,
+      "tag": "0001_swift_maverick",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771050751114,
+      "tag": "0002_charming_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1771051539072,
+      "tag": "0003_good_kid_colt",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1771120976465,
+      "tag": "0004_sad_nextwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1771313017228,
+      "tag": "0005_needy_sunset_bain",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1771321939789,
+      "tag": "0006_keen_layla_miller",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1771560641513,
+      "tag": "0007_hot_proemial_gods",
+      "breakpoints": true
+    }
+  ]
+}

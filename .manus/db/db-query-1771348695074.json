@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, businessName,\n  CASE WHEN instagramGrowth IS NOT NULL THEN 'YES' ELSE 'NO' END as has_instagram,\n  CASE WHEN leadGeneration IS NOT NULL THEN 'YES' ELSE 'NO' END as has_leadgen\nFROM roadmaps \nWHERE instagramGrowth IS NOT NULL AND leadGeneration IS NOT NULL\nORDER BY createdAt DESC \nLIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 33SnFdKKKChXdDb.57e91fc65cf3 --database VpwDNTczi26yJvvzQBaFT4 --execute SELECT id, businessName,\n  CASE WHEN instagramGrowth IS NOT NULL THEN 'YES' ELSE 'NO' END as has_instagram,\n  CASE WHEN leadGeneration IS NOT NULL THEN 'YES' ELSE 'NO' END as has_leadgen\nFROM roadmaps \nWHERE instagramGrowth IS NOT NULL AND leadGeneration IS NOT NULL\nORDER BY createdAt DESC \nLIMIT 3;",
+  "rows": [
+    {
+      "id": "270001",
+      "businessName": "Raw Reel Media",
+      "has_instagram": "YES",
+      "has_leadgen": "YES"
+    },
+    {
+      "id": "240001",
+      "businessName": "Test Med Spa",
+      "has_instagram": "YES",
+      "has_leadgen": "YES"
+    },
+    {
+      "id": "180001",
+      "businessName": "Doctor Lead Flow",
+      "has_instagram": "YES",
+      "has_leadgen": "YES"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tbusinessName\thas_instagram\thas_leadgen\n270001\tRaw Reel Media\tYES\tYES\n240001\tTest Med Spa\tYES\tYES\n180001\tDoctor Lead Flow\tYES\tYES\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}
