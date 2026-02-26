@@ -1,5 +1,20 @@
 import jsPDF from 'jspdf';
 
+// Sanitize text for jsPDF - replace Unicode characters that cause rendering issues
+function pdfSafe(text: string): string {
+  return text
+    .replace(/→/g, '>')
+    .replace(/←/g, '<')
+    .replace(/✓/g, '-')
+    .replace(/✗/g, 'x')
+    .replace(/•/g, '-')
+    .replace(/—/g, '-')
+    .replace(/'/g, "'")
+    .replace(/'/g, "'")
+    .replace(/"/g, '"')
+    .replace(/"/g, '"');
+}
+
 interface RoadmapData {
   businessName: string;
   email?: string;
@@ -35,7 +50,32 @@ interface RoadmapData {
 }
 
 export async function generatePDF(roadmap: RoadmapData): Promise<void> {
-  const pdf = new jsPDF('p', 'mm', 'a4');
+  const rawPdf = new jsPDF('p', 'mm', 'a4');
+
+  // Wrap pdf.text to auto-sanitize Unicode characters that jsPDF can't render
+  const pdf = new Proxy(rawPdf, {
+    get(target, prop, receiver) {
+      if (prop === 'text') {
+        return (text: string | string[], x: number, y: number, options?: any) => {
+          const sanitized = Array.isArray(text) ? text.map(pdfSafe) : pdfSafe(text);
+          return target.text(sanitized, x, y, options);
+        };
+      }
+      if (prop === 'getTextWidth') {
+        return (text: string) => {
+          return target.getTextWidth(pdfSafe(text));
+        };
+      }
+      if (prop === 'splitTextToSize') {
+        return (text: string, maxWidth: number) => {
+          return target.splitTextToSize(pdfSafe(text), maxWidth);
+        };
+      }
+      const val = Reflect.get(target, prop, receiver);
+      if (typeof val === 'function') return val.bind(target);
+      return val;
+    }
+  }) as jsPDF;
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 22;
