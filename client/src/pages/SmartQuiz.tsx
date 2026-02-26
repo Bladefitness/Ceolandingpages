@@ -30,6 +30,7 @@ interface Question {
   insightTitle?: string;
   insightContent?: string;
   insightIcon?: "lightbulb" | "zap" | "trending" | "target" | "award";
+  insightImage?: string;
   skipIf?: (data: Record<string, string>) => boolean;
 }
 
@@ -262,6 +263,16 @@ const questions: Question[] = [
     question: "What's your Instagram handle?", 
     placeholder: "@yourhandle", 
     field: "instagramHandle" 
+  },
+
+  // INSIGHT: The 9-Second Bio Test (after Instagram handle)
+  {
+    id: 19.5,
+    type: "insight",
+    insightTitle: "The 9-Second Test That Wins or Loses a Client",
+    insightContent: "Your Instagram profile is not a resume. It's a filter. If someone can't understand who you help and why in 9 seconds, they scroll. Your bio needs: Name + Niche, who you help + their pain, your method + the result, proof, and one clear CTA.",
+    insightIcon: "target",
+    insightImage: "/bio-optimization.png",
   },
 
   // Q15: Monthly Ad Budget (BUTTONS)
@@ -837,6 +848,13 @@ export default function SmartQuiz() {
                     <p style={{ color: 'var(--titan-text-primary)', fontSize: 'var(--titan-size-body)', lineHeight: 1.7 }}>
                       {currentQuestion.insightContent}
                     </p>
+                    {currentQuestion.insightImage && (
+                      <img
+                        src={currentQuestion.insightImage}
+                        alt={currentQuestion.insightTitle || 'Insight'}
+                        className="mt-4 w-full rounded-lg shadow-md"
+                      />
+                    )}
                   </div>
                 </div>
               </div>

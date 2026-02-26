@@ -627,42 +627,42 @@ export default function Dashboard() {
 
       {/* What's Next Section */}
       <div className="container mx-auto px-4 pb-12">
-        <Card className="p-6 sm:p-8 bg-gradient-to-br from-blue-600 to-blue-700 text-white border-none shadow-xl overflow-hidden">
+        <Card className="p-4 sm:p-8 bg-gradient-to-br from-blue-600 to-blue-700 text-white border-none shadow-xl overflow-hidden">
           <div className="text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to Scale Faster?</h2>
-            <p className="text-lg mb-6 text-blue-100">
+            <h2 className="text-xl sm:text-3xl font-bold mb-3 sm:mb-4">Ready to Scale Faster?</h2>
+            <p className="text-sm sm:text-lg mb-4 sm:mb-6 text-blue-100 px-1">
               You've got your roadmap. Now let's implement it together. Join 5,000+ health professionals getting weekly scaling strategies, live Q&A sessions, and proven playbooks.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <a 
+            <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row justify-center items-center w-full">
+              <a
                 href="https://skool.com/10ksidehustle/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block"
+                className="w-full sm:w-auto"
               >
                 <Button
                   size="lg"
-                  className="bg-white text-blue-600 hover:bg-blue-50 font-bold text-lg px-8 py-6 shadow-lg"
+                  className="bg-white text-blue-600 hover:bg-blue-50 font-bold text-sm sm:text-lg px-4 sm:px-8 py-4 sm:py-6 shadow-lg w-full sm:w-auto"
                 >
                   Join Health Pro CEO Community (Free)
                 </Button>
               </a>
-              <a 
+              <a
                 href="https://demo.doctorleadflow.com/booking"
-                target="_blank" 
+                target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block"
+                className="w-full sm:w-auto"
               >
                 <Button
                   size="lg"
                   variant="outline"
-                  className="bg-transparent border-2 border-white text-white hover:bg-white/10 font-semibold text-lg px-8 py-6"
+                  className="bg-transparent border-2 border-white text-white hover:bg-white/10 font-semibold text-sm sm:text-lg px-4 sm:px-8 py-4 sm:py-6 w-full sm:w-auto"
                 >
                   Book Strategy Call
                 </Button>
               </a>
             </div>
-            <p className="text-sm mt-6 text-blue-200 px-2">
+            <p className="text-xs sm:text-sm mt-4 sm:mt-6 text-blue-200 px-1">
               🎯 Community: Free templates, live workshops, peer support<br/>
               📞 Strategy Call: 1-on-1 implementation roadmap (15 min)
             </p>
