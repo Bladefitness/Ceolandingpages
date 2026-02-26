@@ -145,6 +145,16 @@ const questions: Question[] = [
     ]
   },
 
+  // INSIGHT: The Value Equation (after Offer Confidence)
+  {
+    id: 8.6,
+    type: "insight",
+    insightTitle: "The Architecture of Infinite Value",
+    insightContent: "The most irresistible offers maximize the dream outcome and perceived likelihood of achievement, while minimizing time delay and effort required. This is how top health pros charge 3-5x more than competitors.",
+    insightIcon: "zap",
+    insightImage: "/offer-optimization.png",
+  },
+
   // Q8: CRM Usage (BUTTONS) - Skip if revenue is very low
   {
     id: 9,
@@ -272,7 +282,7 @@ const questions: Question[] = [
     insightTitle: "The 9-Second Test That Wins or Loses a Client",
     insightContent: "Your Instagram profile is not a resume. It's a filter. If someone can't understand who you help and why in 9 seconds, they scroll. Your bio needs: Name + Niche, who you help + their pain, your method + the result, proof, and one clear CTA.",
     insightIcon: "target",
-    insightImage: "/bio-optimization.png",
+    insightImage: "/ig-profile.png",
   },
 
   // Q15: Monthly Ad Budget (BUTTONS)
