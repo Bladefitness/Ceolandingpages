@@ -4,12 +4,17 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { FunnelProvider } from "./contexts/FunnelContext";
 import Home from "./pages/Home";
 import SmartQuiz from "./pages/SmartQuiz";
 import Dashboard from "./pages/Dashboard";
 import AdminLeads from "./pages/AdminLeads";
 import PublicRoadmap from "./pages/PublicRoadmap";
 import SharedPlaybook from "./pages/SharedPlaybook";
+import SalesPage from "./pages/funnel/SalesPage";
+import UpsellPage from "./pages/funnel/UpsellPage";
+import DownsellPage from "./pages/funnel/DownsellPage";
+import ThankYouPage from "./pages/funnel/ThankYouPage";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -20,6 +25,10 @@ function Router() {
       <Route path="/dashboard/:id" component={Dashboard} />
       <Route path="/roadmap/:shareCode" component={PublicRoadmap} />
       <Route path="/playbook/:token" component={SharedPlaybook} />
+      <Route path="/fb-ads-course" component={SalesPage} />
+      <Route path="/offer/vault" component={UpsellPage} />
+      <Route path="/offer/session" component={DownsellPage} />
+      <Route path="/thank-you" component={ThankYouPage} />
       <Route path="/admin" component={AdminLeads} />
       <Route path="/admin/leads" component={AdminLeads} />
       <Route path={"/404"} component={NotFound} />
@@ -43,7 +52,9 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <FunnelProvider>
+            <Router />
+          </FunnelProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

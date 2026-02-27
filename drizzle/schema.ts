@@ -110,3 +110,43 @@ export const playbookShareTokens = mysqlTable("playbookShareTokens", {
 
 export type PlaybookShareToken = typeof playbookShareTokens.$inferSelect;
 export type InsertPlaybookShareToken = typeof playbookShareTokens.$inferInsert;
+
+// ── Funnel / Stripe tables ──
+
+export const products = mysqlTable("products", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  priceInCents: int("priceInCents").notNull(),
+  type: mysqlEnum("type", ["course", "vault", "session"]).notNull(),
+  active: int("active").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Product = typeof products.$inferSelect;
+
+export const funnelOrders = mysqlTable("funnelOrders", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  firstName: varchar("firstName", { length: 255 }).notNull(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripePaymentMethodId: varchar("stripePaymentMethodId", { length: 255 }),
+  status: mysqlEnum("funnelOrderStatus", ["pending", "completed", "failed"]).default("pending").notNull(),
+  totalInCents: int("totalInCents").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FunnelOrder = typeof funnelOrders.$inferSelect;
+
+export const funnelOrderItems = mysqlTable("funnelOrderItems", {
+  id: int("id").autoincrement().primaryKey(),
+  orderId: int("orderId").notNull(),
+  productId: int("productId").notNull(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+  amountInCents: int("amountInCents").notNull(),
+  status: mysqlEnum("funnelItemStatus", ["pending", "paid", "failed"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FunnelOrderItem = typeof funnelOrderItems.$inferSelect;

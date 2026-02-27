@@ -92,3 +92,51 @@ export async function pushLeadToGHL(payload: GHLLeadPayload): Promise<boolean> {
     return false;
   }
 }
+
+interface GHLPurchasePayload {
+  firstName: string;
+  email: string;
+  tag: string;
+  product: string;
+  amount: number;
+}
+
+/**
+ * Push a purchase event to GoHighLevel via webhook.
+ * Adds product-specific tags to the contact.
+ */
+export async function pushPurchaseToGHL(payload: GHLPurchasePayload): Promise<boolean> {
+  if (!ENV.ghlWebhookUrl) {
+    logger.debug("GHL webhook not configured, skipping purchase push");
+    return false;
+  }
+
+  try {
+    const body = {
+      first_name: payload.firstName,
+      email: payload.email,
+      tags: payload.tag,
+      source: `Funnel Purchase - ${payload.product}`,
+      purchase_product: payload.product,
+      purchase_amount: String(payload.amount),
+    };
+
+    const response = await fetch(ENV.ghlWebhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      logger.warn({ status: response.status, detail }, "GHL purchase webhook returned non-OK");
+      return false;
+    }
+
+    logger.info({ email: payload.email, product: payload.product }, "Purchase pushed to GHL");
+    return true;
+  } catch (error) {
+    logger.error({ err: error }, "Failed to push purchase to GHL");
+    return false;
+  }
+}

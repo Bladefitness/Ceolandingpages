@@ -4,12 +4,14 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { roadmapRouter } from "./roadmapRouter";
 import { progressRouter } from "./progressRouter";
+import { funnelRouter } from "./funnelRouter";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   roadmap: roadmapRouter,
   progress: progressRouter,
+  funnel: funnelRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

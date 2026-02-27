@@ -1,6 +1,6 @@
 import { eq, desc, and, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, roadmaps, InsertRoadmap, Roadmap } from "../drizzle/schema";
+import { InsertUser, users, roadmaps, InsertRoadmap, Roadmap, products } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { logger } from "./_core/logger";
 
@@ -230,6 +230,47 @@ export async function getRoadmapByShareCode(shareCode: string): Promise<Roadmap 
       .set({ viewCount: (result[0].viewCount || 0) + 1 })
       .where(eq(roadmaps.id, result[0].id));
   }
-  
+
   return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Seed the products table with funnel products if they don't exist.
+ * Called lazily on first funnel access.
+ */
+export async function seedProducts(): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  const existing = await db.select().from(products).limit(1);
+  if (existing.length > 0) return;
+
+  await db.insert(products).values([
+    {
+      name: "FB Ads Mastery Course",
+      slug: "fb-ads-course",
+      description: "The complete Facebook Ads system for health professionals",
+      priceInCents: 19700,
+      type: "course",
+      active: 1,
+    },
+    {
+      name: "Health Pro CEO Vault",
+      slug: "ceo-vault",
+      description: "All trainings, templates, and a 1-on-1 strategy session",
+      priceInCents: 99700,
+      type: "vault",
+      active: 1,
+    },
+    {
+      name: "1-on-1 Strategy Session",
+      slug: "strategy-session",
+      description: "60-minute private strategy session with Dr. Mecca",
+      priceInCents: 29700,
+      type: "session",
+      active: 1,
+    },
+  ]);
+
+  logger.info("Seeded 3 funnel products");
 }
