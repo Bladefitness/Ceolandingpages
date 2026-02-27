@@ -9,6 +9,11 @@ import Home from "./pages/Home";
 import SmartQuiz from "./pages/SmartQuiz";
 import Dashboard from "./pages/Dashboard";
 import AdminLeads from "./pages/AdminLeads";
+import AdminLayout from "./pages/admin/AdminLayout";
+import FunnelProducts from "./pages/admin/FunnelProducts";
+import FunnelPageEditor from "./pages/admin/FunnelPageEditor";
+import FunnelAnalytics from "./pages/admin/FunnelAnalytics";
+import FunnelSplitTests from "./pages/admin/FunnelSplitTests";
 import PublicRoadmap from "./pages/PublicRoadmap";
 import SharedPlaybook from "./pages/SharedPlaybook";
 import SalesPage from "./pages/funnel/SalesPage";
@@ -29,8 +34,24 @@ function Router() {
       <Route path="/offer/vault" component={UpsellPage} />
       <Route path="/offer/session" component={DownsellPage} />
       <Route path="/thank-you" component={ThankYouPage} />
-      <Route path="/admin" component={AdminLeads} />
-      <Route path="/admin/leads" component={AdminLeads} />
+      <Route path="/admin">
+        <AdminLayout><AdminLeads /></AdminLayout>
+      </Route>
+      <Route path="/admin/leads">
+        <AdminLayout><AdminLeads /></AdminLayout>
+      </Route>
+      <Route path="/admin/funnel/products">
+        <AdminLayout><FunnelProducts /></AdminLayout>
+      </Route>
+      <Route path="/admin/funnel/pages">
+        <AdminLayout><FunnelPageEditor /></AdminLayout>
+      </Route>
+      <Route path="/admin/funnel/analytics">
+        <AdminLayout><FunnelAnalytics /></AdminLayout>
+      </Route>
+      <Route path="/admin/funnel/split-tests">
+        <AdminLayout><FunnelSplitTests /></AdminLayout>
+      </Route>
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

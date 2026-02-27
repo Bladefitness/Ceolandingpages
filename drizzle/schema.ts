@@ -50,24 +50,24 @@ export const roadmaps = mysqlTable("roadmaps", {
   website: varchar("website", { length: 500 }),
   // All quiz answers as JSON
   allAnswers: text("allAnswers"),
-  
+
   // Calculated Scores (0-100)
   overallScore: int("overallScore").default(0).notNull(),
   operationsScore: int("operationsScore").default(0).notNull(),
   marketingScore: int("marketingScore").default(0).notNull(),
   salesScore: int("salesScore").default(0).notNull(),
   systemsScore: int("systemsScore").default(0).notNull(),
-  
+
   // Benchmark data
   industryAverage: int("industryAverage").default(65).notNull(),
   topPerformerScore: int("topPerformerScore").default(88).notNull(),
   userPercentile: int("userPercentile").default(50).notNull(),
-  
+
   // Insights
   topStrength: varchar("topStrength", { length: 255 }),
   biggestGap: varchar("biggestGap", { length: 255 }),
   potentialRevenue: int("potentialRevenue").default(0).notNull(),
-  
+
   // Generated content
   titanRoadmap: text("titanRoadmap"),
   offerPlaybook: text("offerPlaybook"),
@@ -121,6 +121,11 @@ export const products = mysqlTable("products", {
   priceInCents: int("priceInCents").notNull(),
   type: mysqlEnum("type", ["course", "vault", "session"]).notNull(),
   active: int("active").default(1).notNull(),
+  installmentCount: int("installmentCount"),
+  installmentAmountInCents: int("installmentAmountInCents"),
+  installmentIntervalDays: int("installmentIntervalDays").default(30),
+  whopPlanId: varchar("whopPlanId", { length: 255 }),
+  metadata: text("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -150,3 +155,61 @@ export const funnelOrderItems = mysqlTable("funnelOrderItems", {
 });
 
 export type FunnelOrderItem = typeof funnelOrderItems.$inferSelect;
+
+// ── Funnel Page Content CMS ──
+
+export const funnelPageContent = mysqlTable("funnelPageContent", {
+  id: int("id").autoincrement().primaryKey(),
+  pageSlug: varchar("pageSlug", { length: 100 }).notNull().unique(),
+  headline: text("headline"),
+  subheadline: text("subheadline"),
+  bodyText: text("bodyText"),
+  ctaText: varchar("ctaText", { length: 255 }),
+  declineText: varchar("declineText", { length: 255 }),
+  originalPrice: int("originalPrice"),
+  salePrice: int("salePrice"),
+  valueStackItems: text("valueStackItems"), // JSON array of strings
+  faqItems: text("faqItems"), // JSON array of {q, a}
+  heroImageUrl: varchar("heroImageUrl", { length: 500 }),
+  videoUrl: varchar("videoUrl", { length: 500 }),
+  senjaWidgetId: varchar("senjaWidgetId", { length: 255 }),
+  isActive: int("isActive").default(1).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FunnelPageContent = typeof funnelPageContent.$inferSelect;
+
+// ── Funnel Events (Analytics) ──
+
+export const funnelEvents = mysqlTable("funnelEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  sessionId: varchar("sessionId", { length: 100 }).notNull(),
+  eventType: mysqlEnum("eventType", [
+    "page_view", "checkout_start", "purchase",
+    "upsell_view", "upsell_accept", "upsell_decline",
+    "downsell_view", "downsell_accept", "downsell_decline",
+  ]).notNull(),
+  pageSlug: varchar("pageSlug", { length: 100 }).notNull(),
+  orderId: int("orderId"),
+  splitTestVariant: varchar("splitTestVariant", { length: 100 }),
+  metadata: text("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FunnelEvent = typeof funnelEvents.$inferSelect;
+
+// ── A/B Split Tests ──
+
+export const splitTests = mysqlTable("splitTests", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  pageSlug: varchar("pageSlug", { length: 100 }).notNull(),
+  status: mysqlEnum("splitTestStatus", ["draft", "running", "completed"]).default("draft").notNull(),
+  variants: text("variants").notNull(), // JSON array of { id, name, weight, contentOverrides }
+  winnerVariantId: varchar("winnerVariantId", { length: 100 }),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SplitTest = typeof splitTests.$inferSelect;

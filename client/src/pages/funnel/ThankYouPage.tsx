@@ -4,6 +4,7 @@ import { CheckCircle2, ExternalLink, Calendar, BookOpen, Users } from "lucide-re
 import { trpc } from "@/lib/trpc";
 import { useFunnel } from "@/contexts/FunnelContext";
 import { FunnelNav } from "@/components/funnel/FunnelNav";
+import { getSessionId } from "@/lib/funnelTracking";
 
 export default function ThankYouPage() {
   const { orderId, firstName, purchasedProducts } = useFunnel();
@@ -14,11 +15,25 @@ export default function ThankYouPage() {
     { enabled: !!orderId },
   );
 
+  const cmsQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "thank-you" });
+  const cmsContent = cmsQuery.data;
+
+  const sessionId = getSessionId();
+  const trackEvent = trpc.funnelAdmin.events.track.useMutation();
+
   useEffect(() => {
     if (!confettiFired.current) {
       confettiFired.current = true;
       confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
       setTimeout(() => confetti({ particleCount: 80, spread: 100, origin: { y: 0.5 } }), 500);
+      if (sessionId) {
+        trackEvent.mutate({
+          sessionId,
+          eventType: "purchase",
+          pageSlug: "thank-you",
+          orderId: orderId ?? undefined,
+        });
+      }
     }
   }, []);
 
@@ -38,10 +53,10 @@ export default function ThankYouPage() {
             <CheckCircle2 className="h-8 w-8 text-emerald-600" />
           </div>
           <h1 className="mb-2 text-3xl font-bold" style={{ color: "var(--titan-text-primary)" }}>
-            You're In{firstName ? `, ${firstName}` : ""}!
+            {cmsContent?.headline ?? `You're In${firstName ? `, ${firstName}` : ""}!`}
           </h1>
           <p className="text-base" style={{ color: "var(--titan-text-secondary)" }}>
-            Your purchase is confirmed. Check your email for login details.
+            {cmsContent?.subheadline ?? "Your purchase is confirmed. Check your email for login details."}
           </p>
         </div>
 

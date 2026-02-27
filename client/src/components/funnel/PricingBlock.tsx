@@ -2,9 +2,11 @@ interface PricingBlockProps {
   originalPrice: number;
   salePrice: number;
   label?: string;
+  installmentCount?: number;
+  installmentAmount?: number; // in dollars
 }
 
-export function PricingBlock({ originalPrice, salePrice, label }: PricingBlockProps) {
+export function PricingBlock({ originalPrice, salePrice, label, installmentCount, installmentAmount }: PricingBlockProps) {
   const savings = originalPrice - salePrice;
 
   return (
@@ -23,6 +25,11 @@ export function PricingBlock({ originalPrice, salePrice, label }: PricingBlockPr
       <p className="mt-1 text-sm font-medium text-emerald-600">
         You save ${savings} today
       </p>
+      {installmentCount && installmentAmount && (
+        <p className="mt-2 text-sm font-medium" style={{ color: "var(--titan-text-secondary)" }}>
+          or {installmentCount} payments of ${installmentAmount}
+        </p>
+      )}
     </div>
   );
 }

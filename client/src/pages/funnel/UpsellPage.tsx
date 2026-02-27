@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -10,6 +10,7 @@ import { ValueStack } from "@/components/funnel/ValueStack";
 import { PricingBlock } from "@/components/funnel/PricingBlock";
 import { GuaranteeBlock } from "@/components/funnel/GuaranteeBlock";
 import { SenjaTestimonials } from "@/components/funnel/SenjaTestimonials";
+import { getSessionId } from "@/lib/funnelTracking";
 
 const VAULT_ITEMS = [
   "EVERYTHING in the FB Ads Course (you already have this!)",
@@ -28,6 +29,48 @@ export default function UpsellPage() {
   const chargeMutation = trpc.funnel.upsell.charge.useMutation();
   const [error, setError] = useState<string | null>(null);
 
+  // CMS content
+  const cmsQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "upsell" });
+  const cmsContent = cmsQuery.data;
+
+  // Split test
+  const sessionId = getSessionId();
+  const variantQuery = trpc.funnelAdmin.splitTests.getVariant.useQuery(
+    { pageSlug: "upsell", sessionId },
+    { enabled: !!sessionId },
+  );
+  const variant = variantQuery.data;
+
+  // Merge content
+  const content = {
+    headline: (variant?.contentOverrides?.headline as string) ?? cmsContent?.headline ?? null,
+    subheadline: (variant?.contentOverrides?.subheadline as string) ?? cmsContent?.subheadline ?? null,
+    ctaText: (variant?.contentOverrides?.ctaText as string) ?? cmsContent?.ctaText ?? null,
+    declineText: (variant?.contentOverrides?.declineText as string) ?? cmsContent?.declineText ?? null,
+    originalPrice: (variant?.contentOverrides?.originalPrice as number) ?? cmsContent?.originalPrice ?? 1997,
+    salePrice: (variant?.contentOverrides?.salePrice as number) ?? cmsContent?.salePrice ?? 997,
+    valueStackItems: cmsContent?.valueStackItems ? JSON.parse(cmsContent.valueStackItems) as string[] : VAULT_ITEMS,
+  };
+
+  // Products query for installment plan
+  const productsQuery = trpc.funnelAdmin.products.list.useQuery();
+  const vaultProduct = productsQuery.data?.find(p => p.slug === "ceo-vault");
+
+  // Event tracking
+  const trackEvent = trpc.funnelAdmin.events.track.useMutation();
+
+  useEffect(() => {
+    if (sessionId) {
+      trackEvent.mutate({
+        sessionId,
+        eventType: "upsell_view",
+        pageSlug: "upsell",
+        orderId: orderId ?? undefined,
+        splitTestVariant: variant?.variantId,
+      });
+    }
+  }, [sessionId, variant?.variantId]);
+
   // Guard: redirect if no orderId
   if (!orderId) {
     navigate("/fb-ads-course");
@@ -40,6 +83,13 @@ export default function UpsellPage() {
       const result = await chargeMutation.mutateAsync({ orderId: orderId! });
       if (result.success) {
         addProduct("ceo-vault");
+        trackEvent.mutate({
+          sessionId,
+          eventType: "upsell_accept",
+          pageSlug: "upsell",
+          orderId: orderId ?? undefined,
+          splitTestVariant: variant?.variantId,
+        });
         navigate("/thank-you");
       } else {
         setError("Payment could not be processed. Please try again.");
@@ -70,16 +120,18 @@ export default function UpsellPage() {
           Wait — before you go...
         </p>
         <h1 className="mb-4 text-3xl font-bold leading-tight md:text-4xl" style={{ color: "var(--titan-text-primary)" }}>
-          Upgrade to the{" "}
-          <span style={{ background: "var(--titan-grad-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            Health Pro CEO Vault
-          </span>{" "}
-          and Get Everything You Need to Scale
+          {content.headline ?? (
+            <>
+              Upgrade to the{" "}
+              <span style={{ background: "var(--titan-grad-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                Health Pro CEO Vault
+              </span>{" "}
+              and Get Everything You Need to Scale
+            </>
+          )}
         </h1>
         <p className="mx-auto max-w-2xl text-base" style={{ color: "var(--titan-text-secondary)" }}>
-          You're already ahead of 90% of health professionals. The Vault gives you the complete system
-          — all trainings, templates, and a personal strategy session — to go from where you are to
-          where you want to be.
+          {content.subheadline ?? "You're already ahead of 90% of health professionals. The Vault gives you the complete system — all trainings, templates, and a personal strategy session — to go from where you are to where you want to be."}
         </p>
       </section>
 
@@ -90,12 +142,12 @@ export default function UpsellPage() {
 
       {/* Value Stack */}
       <section className="mx-auto max-w-3xl px-4 py-10">
-        <ValueStack items={VAULT_ITEMS} title="Everything Inside the CEO Vault" />
+        <ValueStack items={content.valueStackItems} title="Everything Inside the CEO Vault" />
       </section>
 
       {/* Pricing + CTA */}
       <section className="mx-auto max-w-lg px-4 pb-6 text-center">
-        <PricingBlock originalPrice={1997} salePrice={997} label="One-Time Upgrade Price" />
+        <PricingBlock originalPrice={content.originalPrice} salePrice={content.salePrice} label="One-Time Upgrade Price" />
 
         <button
           onClick={handleAccept}
@@ -108,20 +160,39 @@ export default function UpsellPage() {
               <Loader2 className="h-5 w-5 animate-spin" /> Processing...
             </span>
           ) : (
-            "Yes, Upgrade Me — $997"
+            content.ctaText ?? `Yes, Upgrade Me — $${content.salePrice}`
           )}
         </button>
+
+        {vaultProduct?.installmentCount && vaultProduct?.installmentAmountInCents && (
+          <button
+            onClick={handleAccept}
+            disabled={chargeMutation.isPending}
+            className="mt-3 w-full rounded-xl border-2 border-blue-500/30 bg-blue-500/10 px-8 py-4 text-lg font-semibold text-blue-400 transition-all hover:bg-blue-500/20 disabled:opacity-50"
+          >
+            Or {vaultProduct.installmentCount} Payments of ${(vaultProduct.installmentAmountInCents / 100).toFixed(0)}
+          </button>
+        )}
 
         {error && (
           <p className="mt-3 text-sm text-red-500">{error}</p>
         )}
 
         <button
-          onClick={() => navigate("/offer/session")}
+          onClick={() => {
+            trackEvent.mutate({
+              sessionId,
+              eventType: "upsell_decline",
+              pageSlug: "upsell",
+              orderId: orderId ?? undefined,
+              splitTestVariant: variant?.variantId,
+            });
+            navigate("/offer/session");
+          }}
           className="mt-4 text-sm underline transition hover:opacity-70"
           style={{ color: "var(--titan-text-secondary)" }}
         >
-          No thanks, take me to my course
+          {content.declineText ?? "No thanks, take me to my course"}
         </button>
       </section>
 

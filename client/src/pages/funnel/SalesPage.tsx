@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { ValueStack } from "@/components/funnel/ValueStack";
 import { PricingBlock } from "@/components/funnel/PricingBlock";
 import { GuaranteeBlock } from "@/components/funnel/GuaranteeBlock";
 import { SenjaTestimonials } from "@/components/funnel/SenjaTestimonials";
+import { getSessionId } from "@/lib/funnelTracking";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -59,6 +60,43 @@ export default function SalesPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [formValues, setFormValues] = useState<FormValues | null>(null);
 
+  // CMS content
+  const cmsQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "sales" });
+  const cmsContent = cmsQuery.data;
+
+  // Split test variant
+  const sessionId = getSessionId();
+  const variantQuery = trpc.funnelAdmin.splitTests.getVariant.useQuery(
+    { pageSlug: "sales", sessionId },
+    { enabled: !!sessionId },
+  );
+  const variant = variantQuery.data;
+
+  // Merge content: defaults → CMS → split test overrides
+  const content = {
+    headline: (variant?.contentOverrides?.headline as string) ?? cmsContent?.headline ?? null,
+    subheadline: (variant?.contentOverrides?.subheadline as string) ?? cmsContent?.subheadline ?? null,
+    ctaText: (variant?.contentOverrides?.ctaText as string) ?? cmsContent?.ctaText ?? null,
+    originalPrice: (variant?.contentOverrides?.originalPrice as number) ?? cmsContent?.originalPrice ?? 297,
+    salePrice: (variant?.contentOverrides?.salePrice as number) ?? cmsContent?.salePrice ?? 197,
+    valueStackItems: cmsContent?.valueStackItems ? JSON.parse(cmsContent.valueStackItems) as string[] : VALUE_ITEMS,
+    faqItems: cmsContent?.faqItems ? JSON.parse(cmsContent.faqItems) as Array<{q: string; a: string}> : FAQ_ITEMS,
+  };
+
+  // Event tracking
+  const trackEvent = trpc.funnelAdmin.events.track.useMutation();
+
+  useEffect(() => {
+    if (sessionId) {
+      trackEvent.mutate({
+        sessionId,
+        eventType: "page_view",
+        pageSlug: "sales",
+        splitTestVariant: variant?.variantId,
+      });
+    }
+  }, [sessionId, variant?.variantId]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { firstName: "", email: "" },
@@ -66,6 +104,12 @@ export default function SalesPage() {
 
   const onSubmit = async (values: FormValues) => {
     setFormValues(values);
+    trackEvent.mutate({
+      sessionId,
+      eventType: "checkout_start",
+      pageSlug: "sales",
+      splitTestVariant: variant?.variantId,
+    });
     const result = await createCheckout.mutateAsync(values);
     setOrder(result.orderId, values.email, values.firstName);
     setCheckoutData({ checkoutConfigId: result.checkoutConfigId, orderId: result.orderId });
@@ -79,6 +123,13 @@ export default function SalesPage() {
       whopPaymentId: receiptId,
     });
     addProduct("fb-ads-course");
+    trackEvent.mutate({
+      sessionId,
+      eventType: "purchase",
+      pageSlug: "sales",
+      orderId: checkoutData.orderId,
+      splitTestVariant: variant?.variantId,
+    });
     navigate("/offer/vault");
   };
 
@@ -92,14 +143,17 @@ export default function SalesPage() {
           For Health Professionals Only
         </div>
         <h1 className="mb-4 text-4xl font-bold leading-tight md:text-5xl" style={{ color: "var(--titan-text-primary)" }}>
-          The Exact Facebook Ad System That Fills Health Practices With{" "}
-          <span style={{ background: "var(--titan-grad-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            20+ New Patients Per Month
-          </span>
+          {content.headline ?? (
+            <>
+              The Exact Facebook Ad System That Fills Health Practices With{" "}
+              <span style={{ background: "var(--titan-grad-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                20+ New Patients Per Month
+              </span>
+            </>
+          )}
         </h1>
         <p className="mx-auto mb-8 max-w-2xl text-lg" style={{ color: "var(--titan-text-secondary)" }}>
-          Stop wasting money on ads that don't convert. Learn the proven system used by 500+ health professionals
-          to predictably generate high-quality patient leads on autopilot.
+          {content.subheadline ?? "Stop wasting money on ads that don't convert. Learn the proven system used by 500+ health professionals to predictably generate high-quality patient leads on autopilot."}
         </p>
 
         {/* VSL Placeholder */}
@@ -133,7 +187,7 @@ export default function SalesPage() {
         <h2 className="mb-6 text-center text-2xl font-bold" style={{ color: "var(--titan-text-primary)" }}>
           Everything You Get Inside
         </h2>
-        <ValueStack items={VALUE_ITEMS} />
+        <ValueStack items={content.valueStackItems} />
       </section>
 
       {/* Testimonials (Senja) */}
@@ -148,7 +202,7 @@ export default function SalesPage() {
 
       {/* Pricing + Checkout */}
       <section id="checkout" className="mx-auto max-w-lg px-4 py-12">
-        <PricingBlock originalPrice={297} salePrice={197} label="Special Launch Price" />
+        <PricingBlock originalPrice={content.originalPrice} salePrice={content.salePrice} label="Special Launch Price" />
 
         <div className="mt-8 rounded-2xl border border-[var(--titan-border)] bg-white p-6 shadow-lg">
           {!checkoutData ? (
@@ -191,7 +245,7 @@ export default function SalesPage() {
                     <Loader2 className="h-5 w-5 animate-spin" /> Setting up checkout...
                   </span>
                 ) : (
-                  "Continue to Payment — $197"
+                  content.ctaText ?? `Continue to Payment — $${content.salePrice}`
                 )}
               </button>
               {createCheckout.isError && (
@@ -230,7 +284,7 @@ export default function SalesPage() {
           Frequently Asked Questions
         </h2>
         <div className="space-y-3">
-          {FAQ_ITEMS.map((item, i) => (
+          {content.faqItems.map((item, i) => (
             <div key={i} className="rounded-xl border border-[var(--titan-border)] bg-white">
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}

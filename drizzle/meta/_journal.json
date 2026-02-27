@@ -57,6 +57,13 @@
       "when": 1771560641513,
       "tag": "0007_hot_proemial_gods",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1772232133194,
+      "tag": "0008_majestic_stryfe",
+      "breakpoints": true
     }
   ]
 }
