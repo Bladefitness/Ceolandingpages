@@ -3,9 +3,8 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { WhopCheckoutEmbed } from "@whop/checkout/react";
 import { Loader2, Play, Users, TrendingUp, Award, ChevronDown } from "lucide-react";
-import { getStripePromise } from "@/lib/stripe";
 import { trpc } from "@/lib/trpc";
 import { useFunnel } from "@/contexts/FunnelContext";
 import { FunnelNav } from "@/components/funnel/FunnelNav";
@@ -51,78 +50,14 @@ const FAQ_ITEMS = [
   },
 ];
 
-function CheckoutForm({ clientSecret, orderId }: { clientSecret: string; orderId: number }) {
-  const stripe = useStripe();
-  const elements = useElements();
+export default function SalesPage() {
   const [, navigate] = useLocation();
   const { setOrder, addProduct } = useFunnel();
+  const createCheckout = trpc.funnel.checkout.createCheckout.useMutation();
   const confirmMutation = trpc.funnel.checkout.confirmPurchase.useMutation();
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    setProcessing(true);
-    setError(null);
-
-    const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: { return_url: window.location.origin + "/thank-you" },
-      redirect: "if_required",
-    });
-
-    if (stripeError) {
-      setError(stripeError.message ?? "Payment failed. Please try again.");
-      setProcessing(false);
-      return;
-    }
-
-    if (paymentIntent?.status === "succeeded") {
-      await confirmMutation.mutateAsync({
-        orderId,
-        paymentIntentId: paymentIntent.id,
-      });
-      addProduct("fb-ads-course");
-      navigate("/offer/vault");
-    } else {
-      setError("Payment was not completed. Please try again.");
-      setProcessing(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
-      {error && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
-      <button
-        type="submit"
-        disabled={!stripe || processing}
-        className="w-full rounded-xl px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
-        style={{ background: "linear-gradient(135deg, var(--titan-gold) 0%, var(--titan-gold-hover) 100%)" }}
-      >
-        {processing ? (
-          <span className="flex items-center justify-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin" /> Processing...
-          </span>
-        ) : (
-          "Get Instant Access — $197"
-        )}
-      </button>
-    </form>
-  );
-}
-
-export default function SalesPage() {
-  const { setOrder } = useFunnel();
-  const createIntent = trpc.funnel.checkout.createIntent.useMutation();
-  const [checkoutData, setCheckoutData] = useState<{ clientSecret: string; orderId: number } | null>(null);
+  const [checkoutData, setCheckoutData] = useState<{ checkoutConfigId: string; orderId: number } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [formValues, setFormValues] = useState<FormValues | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -130,9 +65,21 @@ export default function SalesPage() {
   });
 
   const onSubmit = async (values: FormValues) => {
-    const result = await createIntent.mutateAsync(values);
+    setFormValues(values);
+    const result = await createCheckout.mutateAsync(values);
     setOrder(result.orderId, values.email, values.firstName);
-    setCheckoutData({ clientSecret: result.clientSecret, orderId: result.orderId });
+    setCheckoutData({ checkoutConfigId: result.checkoutConfigId, orderId: result.orderId });
+  };
+
+  const handleCheckoutComplete = async (planId: string, receiptId?: string) => {
+    if (!checkoutData) return;
+
+    await confirmMutation.mutateAsync({
+      orderId: checkoutData.orderId,
+      whopPaymentId: receiptId,
+    });
+    addProduct("fb-ads-course");
+    navigate("/offer/vault");
   };
 
   return (
@@ -235,11 +182,11 @@ export default function SalesPage() {
               </div>
               <button
                 type="submit"
-                disabled={createIntent.isPending}
+                disabled={createCheckout.isPending}
                 className="w-full rounded-xl px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg, var(--titan-gold) 0%, var(--titan-gold-hover) 100%)" }}
               >
-                {createIntent.isPending ? (
+                {createCheckout.isPending ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="h-5 w-5 animate-spin" /> Setting up checkout...
                   </span>
@@ -247,25 +194,28 @@ export default function SalesPage() {
                   "Continue to Payment — $197"
                 )}
               </button>
-              {createIntent.isError && (
+              {createCheckout.isError && (
                 <p className="text-center text-sm text-red-500">
-                  {createIntent.error.message}
+                  {createCheckout.error.message}
                 </p>
               )}
             </form>
           ) : (
-            <Elements
-              stripe={getStripePromise()}
-              options={{
-                clientSecret: checkoutData.clientSecret,
-                appearance: {
-                  theme: "stripe",
-                  variables: { colorPrimary: "#0EA5E9", borderRadius: "8px" },
-                },
-              }}
-            >
-              <CheckoutForm clientSecret={checkoutData.clientSecret} orderId={checkoutData.orderId} />
-            </Elements>
+            <div>
+              <WhopCheckoutEmbed
+                sessionId={checkoutData.checkoutConfigId}
+                theme="light"
+                prefill={{ email: formValues?.email }}
+                setupFutureUsage="off_session"
+                skipRedirect
+                onComplete={handleCheckoutComplete}
+                fallback={
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                  </div>
+                }
+              />
+            </div>
           )}
         </div>
 

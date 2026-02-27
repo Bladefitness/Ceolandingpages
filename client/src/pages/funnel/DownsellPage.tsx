@@ -30,7 +30,7 @@ export default function DownsellPage() {
   const handleAccept = async () => {
     setError(null);
     try {
-      const result = await chargeMutation.mutateAsync({ orderId });
+      const result = await chargeMutation.mutateAsync({ orderId: orderId! });
       if (result.success) {
         addProduct("strategy-session");
         navigate("/thank-you");

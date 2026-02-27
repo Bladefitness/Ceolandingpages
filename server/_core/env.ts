@@ -11,8 +11,9 @@ export const ENV = {
   emailFromName: process.env.EMAIL_FROM_NAME ?? "CEO Scaling Roadmap",
   emailFromAddress: process.env.EMAIL_FROM_ADDRESS ?? "noreply@updates.doctorleadflow.com",
   ghlWebhookUrl: process.env.GHL_WEBHOOK_URL ?? "",
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
-  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  whopApiKey: process.env.WHOP_API_KEY ?? "",
+  whopCompanyId: process.env.WHOP_COMPANY_ID ?? "",
+  whopWebhookSecret: process.env.WHOP_WEBHOOK_SECRET ?? "",
 };
 
 // Validate critical env vars at startup in production

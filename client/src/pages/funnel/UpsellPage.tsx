@@ -37,7 +37,7 @@ export default function UpsellPage() {
   const handleAccept = async () => {
     setError(null);
     try {
-      const result = await chargeMutation.mutateAsync({ orderId });
+      const result = await chargeMutation.mutateAsync({ orderId: orderId! });
       if (result.success) {
         addProduct("ceo-vault");
         navigate("/thank-you");
