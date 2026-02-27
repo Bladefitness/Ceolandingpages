@@ -21,11 +21,11 @@ export default function DownsellPage() {
   const chargeMutation = trpc.funnel.downsell.charge.useMutation();
   const [error, setError] = useState<string | null>(null);
 
-  // Guard disabled for preview
-  // if (!orderId) {
-  //   navigate("/fb-ads-course");
-  //   return null;
-  // }
+  // Guard: redirect if no orderId
+  if (!orderId) {
+    navigate("/fb-ads-course");
+    return null;
+  }
 
   const handleAccept = async () => {
     setError(null);
