@@ -59,8 +59,9 @@ export default function DownsellPage() {
     }
   }, [sessionId, variant?.variantId]);
 
-  // Guard: redirect if no orderId
-  if (!orderId) {
+  // Guard: redirect if no orderId (skip in preview mode)
+  const isPreview = new URLSearchParams(window.location.search).has("preview");
+  if (!orderId && !isPreview) {
     navigate("/fb-ads-course");
     return null;
   }
