@@ -557,6 +557,7 @@ interface YTPlayer {
   destroy(): void;
   unMute(): void;
   setVolume(volume: number): void;
+  seekTo(seconds: number, allowSeekAhead: boolean): void;
 }
 
 interface YTPlayerConstructor {
@@ -636,6 +637,7 @@ function YouTubePlayer({ embedUrl, onReady, playerRef }: YouTubePlayerProps) {
         autoplay: 1,
         mute: 1,
         start: 0,
+        playlist: match[1],
         enablejsapi: 1,
         origin: window.location.origin,
         rel: 0,
@@ -644,6 +646,7 @@ function YouTubePlayer({ embedUrl, onReady, playerRef }: YouTubePlayerProps) {
       events: {
         onReady: () => {
           playerRef.current = player;
+          player.seekTo(0, true);
           onReady();
         },
       },
