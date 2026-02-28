@@ -57,7 +57,7 @@ export default function SalesPage() {
   const { setOrder, addProduct } = useFunnel();
   const createCheckout = trpc.funnel.checkout.createCheckout.useMutation();
   const confirmMutation = trpc.funnel.checkout.confirmPurchase.useMutation();
-  const [checkoutData, setCheckoutData] = useState<{ checkoutConfigId: string; orderId: number } | null>(null);
+  const [checkoutData, setCheckoutData] = useState<{ checkoutConfigId: string; orderId: number; sandbox?: boolean } | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [formValues, setFormValues] = useState<FormValues | null>(null);
 
@@ -118,7 +118,7 @@ export default function SalesPage() {
     });
     const result = await createCheckout.mutateAsync(values);
     setOrder(result.orderId, values.email, values.firstName);
-    setCheckoutData({ checkoutConfigId: result.checkoutConfigId, orderId: result.orderId });
+    setCheckoutData({ checkoutConfigId: result.checkoutConfigId, orderId: result.orderId, sandbox: result.sandbox });
   };
 
   const handleCheckoutComplete = async (planId: string, receiptId?: string) => {
@@ -276,6 +276,7 @@ export default function SalesPage() {
               <WhopCheckoutEmbed
                 sessionId={checkoutData.checkoutConfigId}
                 theme="light"
+                environment={checkoutData.sandbox ? "sandbox" : "production"}
                 prefill={{ email: formValues?.email }}
                 setupFutureUsage="off_session"
                 skipRedirect

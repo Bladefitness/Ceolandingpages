@@ -80,6 +80,7 @@ export const funnelRouter = router({
           checkoutConfigId: checkoutConfig.id,
           orderId,
           amount: product.priceInCents,
+          sandbox: ENV.whopSandbox,
         };
       }),
 
