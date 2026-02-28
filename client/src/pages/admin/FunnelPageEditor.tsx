@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Trash2, Plus, Save } from "lucide-react";
+import { Trash2, Plus, Save, ExternalLink, Eye, EyeOff, Monitor, Smartphone } from "lucide-react";
 
 type PageSlug = "sales" | "upsell" | "downsell" | "thank-you";
 
 const PAGE_SLUGS: PageSlug[] = ["sales", "upsell", "downsell", "thank-you"];
+
+const SLUG_TO_PATH: Record<PageSlug, string> = {
+  sales: "/fb-ads-course",
+  upsell: "/offer/vault",
+  downsell: "/offer/session",
+  "thank-you": "/thank-you",
+};
+
+const SLUG_LABELS: Record<PageSlug, string> = {
+  sales: "Sales Page",
+  upsell: "Upsell Page",
+  downsell: "Downsell Page",
+  "thank-you": "Thank You Page",
+};
 
 interface FaqItem {
   q: string;
@@ -233,13 +247,74 @@ function FaqEditor({ items, onChange }: FaqEditorProps) {
   );
 }
 
-interface PageEditorPanelProps {
+// ── Live Preview Panel ──
+
+interface LivePreviewProps {
   slug: PageSlug;
+  refreshKey: number;
 }
 
-function PageEditorPanel({ slug }: PageEditorPanelProps) {
+function LivePreview({ slug, refreshKey }: LivePreviewProps) {
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const previewUrl = `${window.location.origin}${SLUG_TO_PATH[slug]}`;
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Preview toolbar */}
+      <div className="flex items-center justify-between border-b border-slate-700 bg-slate-800/50 px-3 py-2">
+        <span className="text-xs font-medium text-slate-400">Live Preview</span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setDevice("desktop")}
+            className={`rounded p-1.5 transition ${device === "desktop" ? "bg-slate-700 text-slate-200" : "text-slate-500 hover:text-slate-300"}`}
+            title="Desktop view"
+          >
+            <Monitor className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setDevice("mobile")}
+            className={`rounded p-1.5 transition ${device === "mobile" ? "bg-slate-700 text-slate-200" : "text-slate-500 hover:text-slate-300"}`}
+            title="Mobile view"
+          >
+            <Smartphone className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* iframe container */}
+      <div className="flex-1 flex items-start justify-center overflow-auto bg-slate-950 p-4">
+        <div
+          className="bg-white rounded-lg overflow-hidden shadow-2xl transition-all duration-300"
+          style={{
+            width: device === "mobile" ? "375px" : "100%",
+            maxWidth: device === "mobile" ? "375px" : "100%",
+            height: device === "mobile" ? "667px" : "100%",
+          }}
+        >
+          <iframe
+            key={`${slug}-${refreshKey}`}
+            src={previewUrl}
+            className="w-full h-full border-0"
+            style={{ minHeight: device === "desktop" ? "600px" : "667px" }}
+            title={`Preview: ${SLUG_LABELS[slug]}`}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Page Editor Panel ──
+
+interface PageEditorPanelProps {
+  slug: PageSlug;
+  showPreview: boolean;
+}
+
+function PageEditorPanel({ slug, showPreview }: PageEditorPanelProps) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [notFound, setNotFound] = useState(false);
+  const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
 
   const { data, error, isLoading } = trpc.funnelAdmin.pages.get.useQuery(
     { slug },
@@ -251,9 +326,15 @@ function PageEditorPanel({ slug }: PageEditorPanelProps) {
     }
   );
 
+  const utils = trpc.useUtils();
+
   const updateMutation = trpc.funnelAdmin.pages.update.useMutation({
     onSuccess: () => {
       toast.success("Page saved successfully.");
+      utils.funnelAdmin.pages.get.invalidate({ slug });
+      utils.funnelAdmin.pages.getPublic.invalidate({ slug });
+      // Refresh the preview iframe after save
+      setPreviewRefreshKey((k) => k + 1);
     },
     onError: (err) => {
       toast.error(`Save failed: ${err.message}`);
@@ -281,19 +362,34 @@ function PageEditorPanel({ slug }: PageEditorPanelProps) {
     updateMutation.mutate(formToPayload(slug, form));
   }
 
+  const livePath = SLUG_TO_PATH[slug];
+  const liveUrl = `${window.location.origin}${livePath}`;
+
   if (isLoading) {
     return (
       <div className="py-12 text-center text-slate-400">Loading page content...</div>
     );
   }
 
-  return (
+  const editorForm = (
     <div className="space-y-6">
-      {notFound && (
-        <div className="rounded-md border border-slate-700 bg-slate-800/50 p-4 text-slate-400 text-sm">
-          No content saved yet for this page. Fill in the fields below and save to create it.
-        </div>
-      )}
+      {/* View Live Page link */}
+      <div className="flex items-center justify-between">
+        {notFound && (
+          <div className="rounded-md border border-slate-700 bg-slate-800/50 px-4 py-2 text-slate-400 text-sm">
+            No content saved yet — fill in the fields below and save.
+          </div>
+        )}
+        <a
+          href={liveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto inline-flex items-center gap-2 rounded-md border border-slate-600 px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-700 hover:text-slate-100"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          View Live Page
+        </a>
+      </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="space-y-2">
@@ -434,19 +530,59 @@ function PageEditorPanel({ slug }: PageEditorPanelProps) {
       </div>
     </div>
   );
+
+  if (!showPreview) {
+    return editorForm;
+  }
+
+  return (
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Editor side */}
+      <div className="overflow-y-auto max-h-[calc(100vh-220px)] pr-2">
+        {editorForm}
+      </div>
+      {/* Preview side */}
+      <div className="hidden xl:block rounded-lg border border-slate-700 overflow-hidden h-[calc(100vh-220px)]">
+        <LivePreview slug={slug} refreshKey={previewRefreshKey} />
+      </div>
+    </div>
+  );
 }
+
+// ── Main Page ──
 
 export default function FunnelPageEditor() {
   const [activeSlug, setActiveSlug] = useState<PageSlug>("sales");
+  const [showPreview, setShowPreview] = useState(true);
 
   return (
     <div className="p-6">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-slate-100">Funnel Page Editor</h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Edit content for each page in your funnel.
-          </p>
+      <div className={showPreview ? "mx-auto max-w-7xl" : "mx-auto max-w-4xl"}>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-100">Funnel Page Editor</h1>
+            <p className="mt-1 text-sm text-slate-400">
+              Edit content for each page in your funnel.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPreview(!showPreview)}
+            className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 hidden xl:flex"
+          >
+            {showPreview ? (
+              <>
+                <EyeOff className="h-4 w-4 mr-2" />
+                Hide Preview
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4 mr-2" />
+                Show Preview
+              </>
+            )}
+          </Button>
         </div>
 
         <Tabs
@@ -461,14 +597,14 @@ export default function FunnelPageEditor() {
                 value={slug}
                 className="data-[state=active]:bg-slate-700 data-[state=active]:text-slate-100 text-slate-400 capitalize"
               >
-                {slug}
+                {SLUG_LABELS[slug]}
               </TabsTrigger>
             ))}
           </TabsList>
 
           {PAGE_SLUGS.map((slug) => (
             <TabsContent key={slug} value={slug}>
-              <PageEditorPanel slug={slug} />
+              <PageEditorPanel slug={slug} showPreview={showPreview} />
             </TabsContent>
           ))}
         </Tabs>
