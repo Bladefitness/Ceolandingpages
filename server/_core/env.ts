@@ -23,6 +23,9 @@ if (ENV.isProduction) {
   if (!ENV.cookieSecret) missing.push("JWT_SECRET");
   if (!ENV.forgeApiKey) missing.push("BUILT_IN_FORGE_API_KEY or OPENAI_API_KEY");
 
+  if (!ENV.whopApiKey) missing.push("WHOP_API_KEY");
+  if (!ENV.whopCompanyId) missing.push("WHOP_COMPANY_ID");
+
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(", ")}. See .env.example for details.`

@@ -8,15 +8,17 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Trash2, Plus, Save, ExternalLink, Eye, EyeOff, Monitor, Smartphone } from "lucide-react";
 
-type PageSlug = "sales" | "upsell" | "downsell" | "thank-you";
+type PageSlug = "sales" | "upsell" | "downsell" | "thank-you" | "book-session" | "call-prep";
 
-const PAGE_SLUGS: PageSlug[] = ["sales", "upsell", "downsell", "thank-you"];
+const PAGE_SLUGS: PageSlug[] = ["sales", "upsell", "downsell", "thank-you", "book-session", "call-prep"];
 
 const SLUG_TO_PATH: Record<PageSlug, string> = {
   sales: "/fb-ads-course",
   upsell: "/offer/vault",
   downsell: "/offer/session",
   "thank-you": "/thank-you",
+  "book-session": "/book-session",
+  "call-prep": "/call-prep",
 };
 
 const SLUG_LABELS: Record<PageSlug, string> = {
@@ -24,6 +26,8 @@ const SLUG_LABELS: Record<PageSlug, string> = {
   upsell: "Upsell Page",
   downsell: "Downsell Page",
   "thank-you": "Thank You Page",
+  "book-session": "Booking Page",
+  "call-prep": "Call Prep Page",
 };
 
 interface FaqItem {

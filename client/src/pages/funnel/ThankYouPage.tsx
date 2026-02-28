@@ -102,7 +102,9 @@ export default function ThankYouPage() {
           <div className="space-y-4">
             {/* Always: Course access */}
             <a
-              href="#"
+              href="https://skool.com/10ksidehustle/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-4 rounded-xl border border-[var(--titan-border)] p-4 transition hover:border-blue-300 hover:bg-blue-50/50"
             >
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100">
@@ -123,7 +125,9 @@ export default function ThankYouPage() {
             {hasVault && (
               <>
                 <a
-                  href="#"
+                  href="https://skool.com/10ksidehustle/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-4 rounded-xl border border-[var(--titan-border)] p-4 transition hover:border-indigo-300 hover:bg-indigo-50/50"
                 >
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-100">
@@ -140,7 +144,7 @@ export default function ThankYouPage() {
                   <ExternalLink className="h-4 w-4 flex-shrink-0 text-indigo-500" />
                 </a>
                 <a
-                  href="#"
+                  href="/book-session"
                   className="flex items-center gap-4 rounded-xl border border-[var(--titan-border)] p-4 transition hover:border-emerald-300 hover:bg-emerald-50/50"
                 >
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100">
@@ -162,7 +166,7 @@ export default function ThankYouPage() {
             {/* If session only (not vault): calendar */}
             {hasSession && !hasVault && (
               <a
-                href="#"
+                href="/book-session"
                 className="flex items-center gap-4 rounded-xl border border-[var(--titan-border)] p-4 transition hover:border-emerald-300 hover:bg-emerald-50/50"
               >
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100">
@@ -182,7 +186,9 @@ export default function ThankYouPage() {
 
             {/* Community */}
             <a
-              href="#"
+              href="https://skool.com/10ksidehustle/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-4 rounded-xl border border-[var(--titan-border)] p-4 transition hover:border-purple-300 hover:bg-purple-50/50"
             >
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100">

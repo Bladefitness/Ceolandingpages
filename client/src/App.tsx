@@ -20,6 +20,8 @@ import SalesPage from "./pages/funnel/SalesPage";
 import UpsellPage from "./pages/funnel/UpsellPage";
 import DownsellPage from "./pages/funnel/DownsellPage";
 import ThankYouPage from "./pages/funnel/ThankYouPage";
+import BookingPage from "./pages/funnel/BookingPage";
+import CallPrepPage from "./pages/funnel/CallPrepPage";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -34,6 +36,8 @@ function Router() {
       <Route path="/offer/vault" component={UpsellPage} />
       <Route path="/offer/session" component={DownsellPage} />
       <Route path="/thank-you" component={ThankYouPage} />
+      <Route path="/book-session" component={BookingPage} />
+      <Route path="/call-prep" component={CallPrepPage} />
       <Route path="/admin">
         <AdminLayout><AdminLeads /></AdminLayout>
       </Route>

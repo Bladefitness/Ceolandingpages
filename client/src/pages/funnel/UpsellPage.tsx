@@ -91,7 +91,7 @@ export default function UpsellPage() {
           orderId: orderId ?? undefined,
           splitTestVariant: variant?.variantId,
         });
-        navigate("/thank-you");
+        navigate("/book-session");
       } else {
         setError("Payment could not be processed. Please try again.");
       }
