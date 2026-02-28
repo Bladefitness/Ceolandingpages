@@ -60,9 +60,11 @@ export default function SalesPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [formValues, setFormValues] = useState<FormValues | null>(null);
 
-  // CMS content
-  const cmsQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "sales" });
-  const cmsContent = cmsQuery.data;
+  // CMS content — use draft preview when ?preview=true
+  const isPreview = new URLSearchParams(window.location.search).has("preview");
+  const cmsPublicQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "sales" }, { enabled: !isPreview });
+  const cmsPreviewQuery = trpc.funnelAdmin.pages.getPreview.useQuery({ slug: "sales" }, { enabled: isPreview });
+  const cmsContent = isPreview ? cmsPreviewQuery.data : cmsPublicQuery.data;
 
   // Split test variant
   const sessionId = getSessionId();

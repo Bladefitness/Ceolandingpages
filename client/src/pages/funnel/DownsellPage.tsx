@@ -22,8 +22,11 @@ export default function DownsellPage() {
   const chargeMutation = trpc.funnel.downsell.charge.useMutation();
   const [error, setError] = useState<string | null>(null);
 
-  const cmsQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "downsell" });
-  const cmsContent = cmsQuery.data;
+  // CMS content — use draft preview when ?preview=true
+  const isPreviewMode = new URLSearchParams(window.location.search).has("preview");
+  const cmsPublicQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "downsell" }, { enabled: !isPreviewMode });
+  const cmsPreviewQuery = trpc.funnelAdmin.pages.getPreview.useQuery({ slug: "downsell" }, { enabled: isPreviewMode });
+  const cmsContent = isPreviewMode ? cmsPreviewQuery.data : cmsPublicQuery.data;
 
   const sessionId = getSessionId();
   const variantQuery = trpc.funnelAdmin.splitTests.getVariant.useQuery(
@@ -60,8 +63,7 @@ export default function DownsellPage() {
   }, [sessionId, variant?.variantId]);
 
   // Guard: redirect if no orderId (skip in preview mode)
-  const isPreview = new URLSearchParams(window.location.search).has("preview");
-  if (!orderId && !isPreview) {
+  if (!orderId && !isPreviewMode) {
     navigate("/fb-ads-course");
     return null;
   }

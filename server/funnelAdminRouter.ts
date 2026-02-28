@@ -206,9 +206,9 @@ export const funnelAdminRouter = router({
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
         const { slug, ...fields } = input;
-        const updateSet: Record<string, unknown> = {};
+        const draftBlob: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(fields)) {
-          if (value !== undefined) updateSet[key] = value;
+          if (value !== undefined) draftBlob[key] = value;
         }
 
         const existing = await db.select({ id: funnelPageContent.id })
@@ -217,27 +217,93 @@ export const funnelAdminRouter = router({
           .limit(1);
 
         if (existing.length > 0) {
-          await db.update(funnelPageContent).set(updateSet).where(eq(funnelPageContent.pageSlug, slug));
+          await db.update(funnelPageContent)
+            .set({ draftContent: JSON.stringify(draftBlob) })
+            .where(eq(funnelPageContent.pageSlug, slug));
         } else {
           await db.insert(funnelPageContent).values({
             pageSlug: slug,
-            headline: (updateSet.headline as string) ?? null,
-            subheadline: (updateSet.subheadline as string) ?? null,
-            bodyText: (updateSet.bodyText as string) ?? null,
-            ctaText: (updateSet.ctaText as string) ?? null,
-            declineText: (updateSet.declineText as string) ?? null,
-            originalPrice: (updateSet.originalPrice as number) ?? null,
-            salePrice: (updateSet.salePrice as number) ?? null,
-            valueStackItems: (updateSet.valueStackItems as string) ?? null,
-            faqItems: (updateSet.faqItems as string) ?? null,
-            heroImageUrl: (updateSet.heroImageUrl as string) ?? null,
-            videoUrl: (updateSet.videoUrl as string) ?? null,
-            senjaWidgetId: (updateSet.senjaWidgetId as string) ?? null,
-            isActive: (updateSet.isActive as number) ?? 1,
+            headline: null,
+            subheadline: null,
+            bodyText: null,
+            ctaText: null,
+            declineText: null,
+            originalPrice: null,
+            salePrice: null,
+            valueStackItems: null,
+            faqItems: null,
+            heroImageUrl: null,
+            videoUrl: null,
+            senjaWidgetId: null,
+            isActive: 1,
+            draftContent: JSON.stringify(draftBlob),
           });
         }
 
         return { success: true };
+      }),
+
+    publish: adminProcedure
+      .input(z.object({ slug: z.string() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+        const rows = await db.select().from(funnelPageContent)
+          .where(eq(funnelPageContent.pageSlug, input.slug)).limit(1);
+        if (rows.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Page not found" });
+
+        const page = rows[0];
+        if (!page.draftContent) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "No draft to publish" });
+        }
+
+        const draft = JSON.parse(page.draftContent) as Record<string, unknown>;
+        const publishSet: Record<string, unknown> = { draftContent: null };
+        const allowedFields = [
+          "headline", "subheadline", "bodyText", "ctaText", "declineText",
+          "originalPrice", "salePrice", "valueStackItems", "faqItems",
+          "heroImageUrl", "videoUrl", "senjaWidgetId", "isActive",
+        ];
+        for (const field of allowedFields) {
+          if (draft[field] !== undefined) publishSet[field] = draft[field];
+        }
+
+        await db.update(funnelPageContent).set(publishSet)
+          .where(eq(funnelPageContent.pageSlug, input.slug));
+
+        return { success: true };
+      }),
+
+    discardDraft: adminProcedure
+      .input(z.object({ slug: z.string() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+        await db.update(funnelPageContent)
+          .set({ draftContent: null })
+          .where(eq(funnelPageContent.pageSlug, input.slug));
+
+        return { success: true };
+      }),
+
+    getPreview: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+        const rows = await db.select().from(funnelPageContent)
+          .where(eq(funnelPageContent.pageSlug, input.slug)).limit(1);
+        if (rows.length === 0) return null;
+
+        const page = rows[0];
+        if (page.draftContent) {
+          const draft = JSON.parse(page.draftContent) as Record<string, unknown>;
+          return { ...page, ...draft, draftContent: page.draftContent };
+        }
+        return page;
       }),
   }),
 

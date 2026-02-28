@@ -20,8 +20,11 @@ export default function BookingPage() {
   const { orderId, firstName, purchasedProducts } = useFunnel();
   const [, navigate] = useLocation();
 
-  const cmsQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "book-session" });
-  const cmsContent = cmsQuery.data;
+  // CMS content — use draft preview when ?preview=true
+  const isPreviewMode = new URLSearchParams(window.location.search).has("preview");
+  const cmsPublicQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "book-session" }, { enabled: !isPreviewMode });
+  const cmsPreviewQuery = trpc.funnelAdmin.pages.getPreview.useQuery({ slug: "book-session" }, { enabled: isPreviewMode });
+  const cmsContent = isPreviewMode ? cmsPreviewQuery.data : cmsPublicQuery.data;
 
   const sessionId = getSessionId();
   const trackEvent = trpc.funnelAdmin.events.track.useMutation();
@@ -38,8 +41,7 @@ export default function BookingPage() {
   }, [sessionId]);
 
   // Guard: redirect if no orderId (skip in preview mode)
-  const isPreview = new URLSearchParams(window.location.search).has("preview");
-  if (!orderId && !isPreview) {
+  if (!orderId && !isPreviewMode) {
     navigate("/fb-ads-course");
     return null;
   }

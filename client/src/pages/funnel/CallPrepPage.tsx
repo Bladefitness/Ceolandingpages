@@ -16,8 +16,11 @@ const PREP_ITEMS = [
 export default function CallPrepPage() {
   const { orderId, firstName } = useFunnel();
 
-  const cmsQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "call-prep" });
-  const cmsContent = cmsQuery.data;
+  // CMS content — use draft preview when ?preview=true
+  const isPreview = new URLSearchParams(window.location.search).has("preview");
+  const cmsPublicQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "call-prep" }, { enabled: !isPreview });
+  const cmsPreviewQuery = trpc.funnelAdmin.pages.getPreview.useQuery({ slug: "call-prep" }, { enabled: isPreview });
+  const cmsContent = isPreview ? cmsPreviewQuery.data : cmsPublicQuery.data;
 
   const sessionId = getSessionId();
   const trackEvent = trpc.funnelAdmin.events.track.useMutation();

@@ -15,8 +15,11 @@ export default function ThankYouPage() {
     { enabled: !!orderId },
   );
 
-  const cmsQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "thank-you" });
-  const cmsContent = cmsQuery.data;
+  // CMS content — use draft preview when ?preview=true
+  const isPreview = new URLSearchParams(window.location.search).has("preview");
+  const cmsPublicQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "thank-you" }, { enabled: !isPreview });
+  const cmsPreviewQuery = trpc.funnelAdmin.pages.getPreview.useQuery({ slug: "thank-you" }, { enabled: isPreview });
+  const cmsContent = isPreview ? cmsPreviewQuery.data : cmsPublicQuery.data;
 
   const sessionId = getSessionId();
   const trackEvent = trpc.funnelAdmin.events.track.useMutation();

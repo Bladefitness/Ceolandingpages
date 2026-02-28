@@ -28,10 +28,12 @@ export default function UpsellPage() {
   const [, navigate] = useLocation();
   const chargeMutation = trpc.funnel.upsell.charge.useMutation();
   const [error, setError] = useState<string | null>(null);
+  const isPreview = new URLSearchParams(window.location.search).has("preview");
 
-  // CMS content
-  const cmsQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "upsell" });
-  const cmsContent = cmsQuery.data;
+  // CMS content — use draft preview when ?preview=true
+  const cmsPublicQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "upsell" }, { enabled: !isPreview });
+  const cmsPreviewQuery = trpc.funnelAdmin.pages.getPreview.useQuery({ slug: "upsell" }, { enabled: isPreview });
+  const cmsContent = isPreview ? cmsPreviewQuery.data : cmsPublicQuery.data;
 
   // Split test
   const sessionId = getSessionId();
@@ -72,7 +74,6 @@ export default function UpsellPage() {
   }, [sessionId, variant?.variantId]);
 
   // Guard: redirect if no orderId (skip in preview mode)
-  const isPreview = new URLSearchParams(window.location.search).has("preview");
   if (!orderId && !isPreview) {
     navigate("/fb-ads-course");
     return null;

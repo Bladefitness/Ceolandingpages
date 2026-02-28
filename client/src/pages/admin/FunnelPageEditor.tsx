@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Trash2, Plus, Save, ExternalLink, Eye, EyeOff, Monitor, Smartphone } from "lucide-react";
+import { Trash2, Plus, Save, ExternalLink, Eye, EyeOff, Monitor, Smartphone, Upload, X, FileEdit } from "lucide-react";
 
 type PageSlug = "sales" | "upsell" | "downsell" | "thank-you" | "book-session" | "call-prep";
 
@@ -330,14 +330,14 @@ function PageEditorPanel({ slug, showPreview }: PageEditorPanelProps) {
     }
   );
 
+  const hasDraft = Boolean(data?.draftContent);
+
   const utils = trpc.useUtils();
 
   const updateMutation = trpc.funnelAdmin.pages.update.useMutation({
     onSuccess: () => {
-      toast.success("Page saved successfully.");
+      toast.success("Draft saved.");
       utils.funnelAdmin.pages.get.invalidate({ slug });
-      utils.funnelAdmin.pages.getPublic.invalidate({ slug });
-      // Refresh the preview iframe after save
       setPreviewRefreshKey((k) => k + 1);
     },
     onError: (err) => {
@@ -345,10 +345,44 @@ function PageEditorPanel({ slug, showPreview }: PageEditorPanelProps) {
     },
   });
 
+  const publishMutation = trpc.funnelAdmin.pages.publish.useMutation({
+    onSuccess: () => {
+      toast.success("Page published!");
+      utils.funnelAdmin.pages.get.invalidate({ slug });
+      utils.funnelAdmin.pages.getPublic.invalidate({ slug });
+      utils.funnelAdmin.pages.getPreview.invalidate({ slug });
+      setPreviewRefreshKey((k) => k + 1);
+    },
+    onError: (err) => {
+      toast.error(`Publish failed: ${err.message}`);
+    },
+  });
+
+  const discardMutation = trpc.funnelAdmin.pages.discardDraft.useMutation({
+    onSuccess: () => {
+      toast.success("Draft discarded.");
+      utils.funnelAdmin.pages.get.invalidate({ slug });
+      setPreviewRefreshKey((k) => k + 1);
+    },
+    onError: (err) => {
+      toast.error(`Discard failed: ${err.message}`);
+    },
+  });
+
   useEffect(() => {
     if (data) {
       setNotFound(false);
-      setForm(dataToForm(data as Record<string, unknown>));
+      // If a draft exists, populate form from draft; otherwise from published fields
+      if (data.draftContent) {
+        try {
+          const draft = JSON.parse(data.draftContent) as Record<string, unknown>;
+          setForm(dataToForm(draft));
+        } catch {
+          setForm(dataToForm(data as Record<string, unknown>));
+        }
+      } else {
+        setForm(dataToForm(data as Record<string, unknown>));
+      }
     } else if (error) {
       const code = (error as { data?: { code?: string } })?.data?.code;
       if (code === "NOT_FOUND") {
@@ -364,6 +398,14 @@ function PageEditorPanel({ slug, showPreview }: PageEditorPanelProps) {
 
   function handleSave() {
     updateMutation.mutate(formToPayload(slug, form));
+  }
+
+  function handlePublish() {
+    publishMutation.mutate({ slug });
+  }
+
+  function handleDiscard() {
+    discardMutation.mutate({ slug });
   }
 
   const livePath = SLUG_TO_PATH[slug];
@@ -522,15 +564,39 @@ function PageEditorPanel({ slug, showPreview }: PageEditorPanelProps) {
         />
       </div>
 
-      <div className="flex justify-end pt-2">
-        <Button
-          onClick={handleSave}
-          disabled={updateMutation.isPending}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {updateMutation.isPending ? "Saving..." : "Save Page"}
-        </Button>
+      <div className="flex items-center justify-between pt-2">
+        <div>
+          {hasDraft && (
+            <Button
+              onClick={handleDiscard}
+              disabled={discardMutation.isPending}
+              variant="ghost"
+              className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+            >
+              <X className="h-4 w-4 mr-2" />
+              {discardMutation.isPending ? "Discarding..." : "Discard Draft"}
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+            variant="outline"
+            className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {updateMutation.isPending ? "Saving..." : "Save Draft"}
+          </Button>
+          <Button
+            onClick={handlePublish}
+            disabled={publishMutation.isPending || !hasDraft}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            {publishMutation.isPending ? "Publishing..." : "Publish"}
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -558,6 +624,18 @@ function PageEditorPanel({ slug, showPreview }: PageEditorPanelProps) {
 export default function FunnelPageEditor() {
   const [activeSlug, setActiveSlug] = useState<PageSlug>("sales");
   const [showPreview, setShowPreview] = useState(true);
+
+  // Fetch all pages to detect which ones have drafts
+  const pagesListQuery = trpc.funnelAdmin.pages.list.useQuery();
+  const draftSlugs = useMemo(() => {
+    const set = new Set<string>();
+    if (pagesListQuery.data) {
+      for (const page of pagesListQuery.data) {
+        if (page.draftContent) set.add(page.pageSlug);
+      }
+    }
+    return set;
+  }, [pagesListQuery.data]);
 
   return (
     <div className="p-6">
@@ -602,6 +680,12 @@ export default function FunnelPageEditor() {
                 className="data-[state=active]:bg-slate-700 data-[state=active]:text-slate-100 text-slate-400 capitalize"
               >
                 {SLUG_LABELS[slug]}
+                {draftSlugs.has(slug) && (
+                  <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+                    <FileEdit className="h-2.5 w-2.5 mr-0.5" />
+                    Draft
+                  </span>
+                )}
               </TabsTrigger>
             ))}
           </TabsList>

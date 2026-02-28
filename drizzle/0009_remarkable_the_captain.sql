@@ -1,0 +1,1 @@
+ALTER TABLE `funnelPageContent` ADD `draftContent` text;
