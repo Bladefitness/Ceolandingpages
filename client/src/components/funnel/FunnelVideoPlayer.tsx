@@ -622,17 +622,15 @@ function YouTubePlayer({ embedUrl, onReady, playerRef }: YouTubePlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const apiReady = useYouTubeApi();
   const [iframeId] = useState(() => `yt-player-${Math.random().toString(36).slice(2, 9)}`);
-  const hasForceSeekRef = useRef(false);
-
   useEffect(() => {
     if (!apiReady || !containerRef.current) return;
-    hasForceSeekRef.current = false;
 
     // Extract video ID from embed URL
     const match = embedUrl.match(/embed\/([a-zA-Z0-9_-]{11})/);
     if (!match) return;
 
     const player = new (window.YT!).Player(iframeId, {
+      host: "https://www.youtube-nocookie.com",
       width: "100%",
       height: "100%",
       videoId: match[1],
@@ -640,7 +638,6 @@ function YouTubePlayer({ embedUrl, onReady, playerRef }: YouTubePlayerProps) {
         autoplay: 1,
         mute: 1,
         start: 0,
-        playlist: match[1],
         enablejsapi: 1,
         origin: window.location.origin,
         rel: 0,
@@ -649,19 +646,7 @@ function YouTubePlayer({ embedUrl, onReady, playerRef }: YouTubePlayerProps) {
       events: {
         onReady: () => {
           playerRef.current = player;
-          player.seekTo(0, true);
           onReady();
-        },
-        onStateChange: (event: { data: number }) => {
-          // YT.PlayerState.PLAYING === 1
-          // Force seek to beginning on first play to override YouTube's
-          // "continue watching" resume behavior from cookies
-          if (event.data === 1 && !hasForceSeekRef.current) {
-            hasForceSeekRef.current = true;
-            if (player.getCurrentTime() > 2) {
-              player.seekTo(0, true);
-            }
-          }
         },
       },
     });
