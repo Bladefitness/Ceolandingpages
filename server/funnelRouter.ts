@@ -24,6 +24,7 @@ export const funnelRouter = router({
         z.object({
           email: z.string().email(),
           firstName: z.string().min(1),
+          phone: z.string().optional(),
         }),
       )
       .mutation(async ({ input }) => {
@@ -47,6 +48,7 @@ export const funnelRouter = router({
         const orderResult = await db.insert(funnelOrders).values({
           email: input.email,
           firstName: input.firstName,
+          phone: input.phone ?? null,
           status: "pending",
           totalInCents: 0,
         });
@@ -173,6 +175,7 @@ export const funnelRouter = router({
           pushPurchaseToGHL({
             firstName: order.firstName,
             email: order.email,
+            phone: order.phone ?? undefined,
             tag: "fb-ads-course-buyer",
             product: "FB Ads Mastery Course",
             amount: 197,
@@ -181,6 +184,7 @@ export const funnelRouter = router({
           pushToZapier({
             firstName: order.firstName,
             email: order.email,
+            phone: order.phone ?? undefined,
             product: "FB Ads Mastery Course",
             amount: 197,
           }).catch((err) => logger.error({ err }, "Zapier push failed for course purchase"));
@@ -267,6 +271,7 @@ export const funnelRouter = router({
         pushPurchaseToGHL({
           firstName: order.firstName,
           email: order.email,
+          phone: order.phone ?? undefined,
           tag: "vault-member",
           product: "Health Pro CEO Vault",
           amount: 997,
@@ -275,6 +280,7 @@ export const funnelRouter = router({
         pushToZapier({
           firstName: order.firstName,
           email: order.email,
+          phone: order.phone ?? undefined,
           product: "Health Pro CEO Vault",
           amount: 997,
         }).catch((err) => logger.error({ err }, "Zapier push failed for vault purchase"));
@@ -357,6 +363,7 @@ export const funnelRouter = router({
         pushPurchaseToGHL({
           firstName: order.firstName,
           email: order.email,
+          phone: order.phone ?? undefined,
           tag: "strategy-session-buyer",
           product: "Strategy Session",
           amount: 297,

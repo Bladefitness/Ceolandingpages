@@ -827,7 +827,7 @@ ${input.biggestFrustration}
         });
 
         // Email is handled by GHL workflow (triggered by titan-quiz-lead tag)
-        const baseUrl = process.env.APP_URL || 'https://quiz.healthproceo.com';
+        const baseUrl = process.env.APP_URL || 'https://healthproceo.com';
         const dashboardUrl = `${baseUrl}/dashboard/${roadmapId}`;
 
         // Push lead to GHL CRM pipeline (async, don't block response)

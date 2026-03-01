@@ -135,6 +135,7 @@ export const funnelOrders = mysqlTable("funnelOrders", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 320 }).notNull(),
   firstName: varchar("firstName", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
   stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
   stripePaymentMethodId: varchar("stripePaymentMethodId", { length: 255 }),
   status: mysqlEnum("funnelOrderStatus", ["pending", "completed", "failed"]).default("pending").notNull(),

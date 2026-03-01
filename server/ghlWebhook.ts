@@ -97,7 +97,7 @@ export async function pushLeadToGHL(payload: GHLLeadPayload): Promise<boolean> {
  * Push a purchase to Zapier for Skool course invite.
  * Fires in parallel with GHL — does not block.
  */
-export async function pushToZapier(payload: { firstName: string; email: string; product: string; amount: number }): Promise<boolean> {
+export async function pushToZapier(payload: { firstName: string; email: string; phone?: string; product: string; amount: number }): Promise<boolean> {
   const url = payload.product === "Health Pro CEO Vault"
     ? ENV.zapierVaultUrl
     : payload.product === "FB Ads Mastery Course"
@@ -113,6 +113,7 @@ export async function pushToZapier(payload: { firstName: string; email: string; 
       body: JSON.stringify({
         first_name: payload.firstName,
         email: payload.email,
+        phone: payload.phone || "",
         purchase_product: payload.product,
         purchase_amount: String(payload.amount),
       }),
@@ -134,6 +135,7 @@ export async function pushToZapier(payload: { firstName: string; email: string; 
 interface GHLPurchasePayload {
   firstName: string;
   email: string;
+  phone?: string;
   tag: string;
   product: string;
   amount: number;
@@ -171,6 +173,7 @@ export async function pushPurchaseToGHL(payload: GHLPurchasePayload): Promise<bo
     const body = {
       first_name: payload.firstName,
       email: payload.email,
+      phone: payload.phone || "",
       tags: payload.tag,
       source: `Funnel Purchase - ${payload.product}`,
       purchase_product: payload.product,

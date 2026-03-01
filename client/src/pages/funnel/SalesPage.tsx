@@ -18,6 +18,7 @@ import { getSessionId } from "@/lib/funnelTracking";
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   email: z.string().email("Valid email is required"),
+  phone: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -105,7 +106,7 @@ export default function SalesPage() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { firstName: "", email: "" },
+    defaultValues: { firstName: "", email: "", phone: "" },
   });
 
   const onSubmit = async (values: FormValues) => {
@@ -262,6 +263,17 @@ export default function SalesPage() {
                 {form.formState.errors.email && (
                   <p className="mt-1 text-xs text-red-500">{form.formState.errors.email.message}</p>
                 )}
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium" style={{ color: "var(--titan-text-primary)" }}>
+                  Phone Number <span className="text-xs font-normal text-gray-400">(optional)</span>
+                </label>
+                <input
+                  {...form.register("phone")}
+                  type="tel"
+                  placeholder="(555) 123-4567"
+                  className="w-full rounded-lg border border-[var(--titan-border)] px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                />
               </div>
               <button
                 type="submit"

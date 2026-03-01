@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { useState } from "react";
+import { SenjaTestimonials } from "@/components/funnel/SenjaTestimonials";
 
 export default function Home() {
   const [firstName, setFirstName] = useState("");
@@ -359,6 +360,21 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ─── TESTIMONIALS ─── */}
+      <section className="py-20 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2
+              className="text-3xl sm:text-4xl font-bold mb-4"
+              style={{ color: 'var(--titan-text-primary)' }}
+            >
+              What Health Professionals Are Saying
+            </h2>
+          </div>
+          <SenjaTestimonials />
         </div>
       </section>
 
