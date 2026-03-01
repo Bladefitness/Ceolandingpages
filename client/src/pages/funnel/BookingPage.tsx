@@ -6,6 +6,7 @@ import { useFunnel } from "@/contexts/FunnelContext";
 import { FunnelNav } from "@/components/funnel/FunnelNav";
 import { SenjaTestimonials } from "@/components/funnel/SenjaTestimonials";
 import { getSessionId } from "@/lib/funnelTracking";
+import { usePixelTracking } from "@/hooks/usePixelTracking";
 
 const GHL_BOOKING_URL = "https://links.doctorleadflow.com/widget/booking/9UjOQl0JVnNqG41Uboyh";
 
@@ -27,6 +28,7 @@ export default function BookingPage() {
   const cmsContent = isPreviewMode ? cmsPreviewQuery.data : cmsPublicQuery.data;
 
   const sessionId = getSessionId();
+  const { fireEvent } = usePixelTracking("book-session");
   const trackEvent = trpc.funnelAdmin.events.track.useMutation();
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function BookingPage() {
         pageSlug: "book-session",
         orderId: orderId ?? undefined,
       });
+      fireEvent("page_view");
     }
   }, [sessionId]);
 

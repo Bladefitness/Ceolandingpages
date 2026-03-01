@@ -11,6 +11,7 @@ import {
   funnelOrderItems,
 } from "../drizzle/schema";
 import { pushPurchaseToGHL, pushToZapier } from "./ghlWebhook";
+import { fireFacebookCapi, getCapiPixelsForPage } from "./trackingService";
 import { logger } from "./_core/logger";
 
 export const funnelRouter = router({
@@ -188,6 +189,20 @@ export const funnelRouter = router({
             product: "FB Ads Mastery Course",
             amount: 197,
           }).catch((err) => logger.error({ err }, "Zapier push failed for course purchase"));
+
+          // Fire Facebook CAPI for purchase
+          getCapiPixelsForPage("sales").then((capiPixels) => {
+            for (const px of capiPixels) {
+              fireFacebookCapi(px.pixelId, px.accessToken, {
+                eventName: "Purchase",
+                email: order.email,
+                phone: order.phone ?? undefined,
+                firstName: order.firstName,
+                value: 197,
+                currency: "USD",
+              }).catch((err) => logger.error({ err }, "CAPI fire failed for course purchase"));
+            }
+          }).catch((err) => logger.error({ err }, "Failed to get CAPI pixels for course"));
         }
 
         return { success: true };
@@ -285,6 +300,20 @@ export const funnelRouter = router({
           amount: 997,
         }).catch((err) => logger.error({ err }, "Zapier push failed for vault purchase"));
 
+        // Fire Facebook CAPI for upsell
+        getCapiPixelsForPage("upsell").then((capiPixels) => {
+          for (const px of capiPixels) {
+            fireFacebookCapi(px.pixelId, px.accessToken, {
+              eventName: "Purchase",
+              email: order.email,
+              phone: order.phone ?? undefined,
+              firstName: order.firstName,
+              value: 997,
+              currency: "USD",
+            }).catch((err) => logger.error({ err }, "CAPI fire failed for vault purchase"));
+          }
+        }).catch((err) => logger.error({ err }, "Failed to get CAPI pixels for upsell"));
+
         return {
           success: true,
           paymentId: payment.id,
@@ -368,6 +397,20 @@ export const funnelRouter = router({
           product: "Strategy Session",
           amount: 297,
         }).catch((err) => logger.error({ err }, "GHL push failed for session purchase"));
+
+        // Fire Facebook CAPI for downsell
+        getCapiPixelsForPage("downsell").then((capiPixels) => {
+          for (const px of capiPixels) {
+            fireFacebookCapi(px.pixelId, px.accessToken, {
+              eventName: "Purchase",
+              email: order.email,
+              phone: order.phone ?? undefined,
+              firstName: order.firstName,
+              value: product.priceInCents / 100,
+              currency: "USD",
+            }).catch((err) => logger.error({ err }, "CAPI fire failed for session purchase"));
+          }
+        }).catch((err) => logger.error({ err }, "Failed to get CAPI pixels for downsell"));
 
         return {
           success: true,

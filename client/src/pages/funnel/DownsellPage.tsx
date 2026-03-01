@@ -10,6 +10,7 @@ import { PricingBlock } from "@/components/funnel/PricingBlock";
 import { GuaranteeBlock } from "@/components/funnel/GuaranteeBlock";
 import { FunnelVideoPlayer } from "@/components/funnel/FunnelVideoPlayer";
 import { getSessionId } from "@/lib/funnelTracking";
+import { usePixelTracking } from "@/hooks/usePixelTracking";
 
 const SESSION_ITEMS = [
   "60-Minute 1-on-1 Strategy Session with Dr. Emeka",
@@ -49,6 +50,8 @@ export default function DownsellPage() {
     videoOverlayStyle: cmsContent?.videoOverlayStyle ?? "front-and-center",
   };
 
+  const { fireEvent } = usePixelTracking("downsell");
+
   const trackEvent = trpc.funnelAdmin.events.track.useMutation();
 
   const productsQuery = trpc.funnelAdmin.products.list.useQuery();
@@ -63,6 +66,7 @@ export default function DownsellPage() {
         orderId: orderId ?? undefined,
         splitTestVariant: variant?.variantId,
       });
+      fireEvent("downsell_view");
     }
   }, [sessionId, variant?.variantId]);
 
@@ -85,6 +89,7 @@ export default function DownsellPage() {
           orderId: orderId ?? undefined,
           splitTestVariant: variant?.variantId,
         });
+        fireEvent("downsell_accept", { value: 297, currency: "USD" });
         navigate("/book-session");
       } else {
         setError("Payment could not be processed. Please try again.");

@@ -13,6 +13,7 @@ import {
   funnelEvents,
   splitTests,
   funnelOrderItems,
+  trackingPixels,
 } from "../drizzle/schema";
 
 // ── Variant assignment helpers ────────────────────────────────────────────────
@@ -578,6 +579,115 @@ export const funnelAdminRouter = router({
           variantId: variant.id,
           contentOverrides: variant.contentOverrides ?? null,
         };
+      }),
+  }),
+
+  // ── Tracking Pixels ───────────────────────────────────────────────────────
+
+  tracking: router({
+    list: adminProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+      return db.select().from(trackingPixels).orderBy(desc(trackingPixels.createdAt));
+    }),
+
+    get: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const rows = await db.select().from(trackingPixels).where(eq(trackingPixels.id, input.id)).limit(1);
+        if (rows.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Pixel not found" });
+        return rows[0];
+      }),
+
+    getActive: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+      const rows = await db.select({
+        id: trackingPixels.id,
+        name: trackingPixels.name,
+        platform: trackingPixels.platform,
+        pixelId: trackingPixels.pixelId,
+        isActive: trackingPixels.isActive,
+        pageScope: trackingPixels.pageScope,
+        eventMapping: trackingPixels.eventMapping,
+      }).from(trackingPixels).where(eq(trackingPixels.isActive, 1));
+      return rows;
+    }),
+
+    create: adminProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          platform: z.enum(["facebook", "google_analytics", "google_tag_manager", "tiktok", "custom"]),
+          pixelId: z.string().min(1),
+          accessToken: z.string().optional(),
+          pageScope: z.string().optional(),
+          eventMapping: z.string().optional(),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const result = await db.insert(trackingPixels).values({
+          name: input.name,
+          platform: input.platform,
+          pixelId: input.pixelId,
+          accessToken: input.accessToken ?? null,
+          isActive: 1,
+          pageScope: input.pageScope ?? null,
+          eventMapping: input.eventMapping ?? null,
+        });
+        return { id: Number(result[0].insertId) };
+      }),
+
+    update: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          name: z.string().optional(),
+          platform: z.enum(["facebook", "google_analytics", "google_tag_manager", "tiktok", "custom"]).optional(),
+          pixelId: z.string().optional(),
+          accessToken: z.string().optional(),
+          pageScope: z.string().optional(),
+          eventMapping: z.string().optional(),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const { id, ...fields } = input;
+        const updateSet: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(fields)) {
+          if (value !== undefined) updateSet[key] = value;
+        }
+        if (Object.keys(updateSet).length === 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "No fields to update" });
+        }
+        await db.update(trackingPixels).set(updateSet).where(eq(trackingPixels.id, id));
+        return { success: true };
+      }),
+
+    toggleActive: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const rows = await db.select().from(trackingPixels).where(eq(trackingPixels.id, input.id)).limit(1);
+        if (rows.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Pixel not found" });
+        const newActive = rows[0].isActive === 1 ? 0 : 1;
+        await db.update(trackingPixels).set({ isActive: newActive }).where(eq(trackingPixels.id, input.id));
+        return { active: newActive };
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        await db.delete(trackingPixels).where(eq(trackingPixels.id, input.id));
+        return { success: true };
       }),
   }),
 

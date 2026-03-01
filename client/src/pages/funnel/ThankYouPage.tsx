@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { useFunnel } from "@/contexts/FunnelContext";
 import { FunnelNav } from "@/components/funnel/FunnelNav";
 import { getSessionId } from "@/lib/funnelTracking";
+import { usePixelTracking } from "@/hooks/usePixelTracking";
 
 export default function ThankYouPage() {
   const { orderId, firstName, purchasedProducts } = useFunnel();
@@ -22,6 +23,7 @@ export default function ThankYouPage() {
   const cmsContent = isPreview ? cmsPreviewQuery.data : cmsPublicQuery.data;
 
   const sessionId = getSessionId();
+  const { fireEvent } = usePixelTracking("thank-you");
   const trackEvent = trpc.funnelAdmin.events.track.useMutation();
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function ThankYouPage() {
           pageSlug: "thank-you",
           orderId: orderId ?? undefined,
         });
+        fireEvent("purchase");
       }
     }
   }, []);

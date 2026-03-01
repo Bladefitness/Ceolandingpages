@@ -6,6 +6,7 @@ import {
   FileText,
   BarChart2,
   FlaskConical,
+  Radio,
 } from "lucide-react";
 
 type NavItem = {
@@ -20,6 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Pages", path: "/admin/funnel/pages", icon: <FileText className="w-4 h-4" /> },
   { label: "Analytics", path: "/admin/funnel/analytics", icon: <BarChart2 className="w-4 h-4" /> },
   { label: "Split Tests", path: "/admin/funnel/split-tests", icon: <FlaskConical className="w-4 h-4" /> },
+  { label: "Tracking", path: "/admin/funnel/tracking", icon: <Radio className="w-4 h-4" /> },
 ];
 
 type AdminLayoutProps = {

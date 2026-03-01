@@ -216,3 +216,26 @@ export const splitTests = mysqlTable("splitTests", {
 });
 
 export type SplitTest = typeof splitTests.$inferSelect;
+
+// ── Tracking Pixels ──
+
+export const trackingPixels = mysqlTable("trackingPixels", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  platform: mysqlEnum("platform", [
+    "facebook",
+    "google_analytics",
+    "google_tag_manager",
+    "tiktok",
+    "custom",
+  ]).notNull(),
+  pixelId: varchar("pixelId", { length: 255 }).notNull(),
+  accessToken: varchar("accessToken", { length: 500 }), // For CAPI (Facebook)
+  isActive: int("isActive").default(1).notNull(),
+  pageScope: text("pageScope"), // JSON string[] or null = all pages
+  eventMapping: text("eventMapping"), // JSON Record<internalEvent, pixelEvent>
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TrackingPixel = typeof trackingPixels.$inferSelect;

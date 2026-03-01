@@ -14,6 +14,7 @@ import FunnelProducts from "./pages/admin/FunnelProducts";
 import FunnelPageEditor from "./pages/admin/FunnelPageEditor";
 import FunnelAnalytics from "./pages/admin/FunnelAnalytics";
 import FunnelSplitTests from "./pages/admin/FunnelSplitTests";
+import TrackingSettings from "./pages/admin/TrackingSettings";
 import PublicRoadmap from "./pages/PublicRoadmap";
 import SharedPlaybook from "./pages/SharedPlaybook";
 import SalesPage from "./pages/funnel/SalesPage";
@@ -55,6 +56,9 @@ function Router() {
       </Route>
       <Route path="/admin/funnel/split-tests">
         <AdminLayout><FunnelSplitTests /></AdminLayout>
+      </Route>
+      <Route path="/admin/funnel/tracking">
+        <AdminLayout><TrackingSettings /></AdminLayout>
       </Route>
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

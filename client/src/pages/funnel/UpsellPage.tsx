@@ -12,6 +12,7 @@ import { GuaranteeBlock } from "@/components/funnel/GuaranteeBlock";
 import { SenjaTestimonials } from "@/components/funnel/SenjaTestimonials";
 import { FunnelVideoPlayer } from "@/components/funnel/FunnelVideoPlayer";
 import { getSessionId } from "@/lib/funnelTracking";
+import { usePixelTracking } from "@/hooks/usePixelTracking";
 
 const VAULT_ITEMS = [
   "EVERYTHING in the FB Ads Course (you already have this!)",
@@ -62,6 +63,8 @@ export default function UpsellPage() {
   const productsQuery = trpc.funnelAdmin.products.list.useQuery();
   const vaultProduct = productsQuery.data?.find(p => p.slug === "ceo-vault");
 
+  const { fireEvent } = usePixelTracking("upsell");
+
   // Event tracking
   const trackEvent = trpc.funnelAdmin.events.track.useMutation();
 
@@ -74,6 +77,7 @@ export default function UpsellPage() {
         orderId: orderId ?? undefined,
         splitTestVariant: variant?.variantId,
       });
+      fireEvent("upsell_view");
     }
   }, [sessionId, variant?.variantId]);
 
@@ -96,6 +100,7 @@ export default function UpsellPage() {
           orderId: orderId ?? undefined,
           splitTestVariant: variant?.variantId,
         });
+        fireEvent("upsell_accept", { value: 997, currency: "USD" });
         navigate("/book-session");
       } else {
         setError("Payment could not be processed. Please try again.");

@@ -11,6 +11,7 @@ import { EnhancedProgressBar } from "@/components/EnhancedProgressBar";
 import { ExitIntentModal } from "@/components/ExitIntentModal";
 import { SocialProof } from "@/components/SocialProof";
 import { ConfidenceSlider } from "@/components/ConfidenceSlider";
+import { usePixelTracking } from "@/hooks/usePixelTracking";
 
 type QuestionType = "text" | "buttons" | "lesson" | "insight" | "confidence";
 
@@ -476,6 +477,10 @@ export default function SmartQuiz() {
       initialStep++;
     }
   }
+
+  const { fireEvent } = usePixelTracking("quiz");
+
+  useEffect(() => { fireEvent("page_view"); }, []);
 
   const [currentStep, setCurrentStep] = useState(initialStep);
   const [formData, setFormData] = useState<Record<string, string>>(initialFormData);

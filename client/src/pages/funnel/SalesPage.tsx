@@ -14,6 +14,7 @@ import { GuaranteeBlock } from "@/components/funnel/GuaranteeBlock";
 import { SenjaTestimonials } from "@/components/funnel/SenjaTestimonials";
 import { FunnelVideoPlayer } from "@/components/funnel/FunnelVideoPlayer";
 import { getSessionId } from "@/lib/funnelTracking";
+import { usePixelTracking } from "@/hooks/usePixelTracking";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -90,6 +91,8 @@ export default function SalesPage() {
     videoOverlayStyle: cmsContent?.videoOverlayStyle ?? "front-and-center",
   };
 
+  const { fireEvent } = usePixelTracking("sales");
+
   // Event tracking
   const trackEvent = trpc.funnelAdmin.events.track.useMutation();
 
@@ -101,6 +104,7 @@ export default function SalesPage() {
         pageSlug: "sales",
         splitTestVariant: variant?.variantId,
       });
+      fireEvent("page_view");
     }
   }, [sessionId, variant?.variantId]);
 
@@ -117,6 +121,7 @@ export default function SalesPage() {
       pageSlug: "sales",
       splitTestVariant: variant?.variantId,
     });
+    fireEvent("checkout_start");
     const result = await createCheckout.mutateAsync(values);
     setOrder(result.orderId, values.email, values.firstName);
     setCheckoutData({ checkoutConfigId: result.checkoutConfigId, orderId: result.orderId, sandbox: result.sandbox });
@@ -141,6 +146,7 @@ export default function SalesPage() {
       orderId: checkoutData.orderId,
       splitTestVariant: variant?.variantId,
     });
+    fireEvent("purchase", { value: checkoutData.orderId, currency: "USD" });
     navigate("/offer/vault");
   };
 
