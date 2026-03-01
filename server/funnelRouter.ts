@@ -100,11 +100,40 @@ export const funnelRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
+        // Look up member ID from the payment if not provided directly
+        let memberId = input.whopMemberId ?? null;
+        if (!memberId) {
+          try {
+            const whop = getWhop();
+            if (input.whopPaymentId) {
+              // Try direct payment lookup
+              const payment = await whop.payments.retrieve(input.whopPaymentId);
+              memberId = payment.member?.id ?? null;
+              logger.info({ paymentId: input.whopPaymentId, memberId }, "Resolved member ID from payment");
+            }
+            if (!memberId) {
+              // Fallback: search recent payments by orderId metadata
+              const payments = await whop.payments.list({
+                company_id: ENV.whopCompanyId,
+              });
+              const match = payments?.data?.find(
+                (p: any) => p.metadata?.orderId === String(input.orderId),
+              );
+              if (match) {
+                memberId = match.member?.id ?? null;
+                logger.info({ orderId: input.orderId, memberId }, "Resolved member ID from payment list search");
+              }
+            }
+          } catch (err) {
+            logger.error({ err, orderId: input.orderId }, "Failed to resolve member ID from Whop");
+          }
+        }
+
         // Update order with Whop member ID (used for upsell charges)
         await db
           .update(funnelOrders)
           .set({
-            stripeCustomerId: input.whopMemberId ?? null, // reusing column for whop member ID
+            stripeCustomerId: memberId, // reusing column for whop member ID
             status: "completed",
           })
           .where(eq(funnelOrders.id, input.orderId));
