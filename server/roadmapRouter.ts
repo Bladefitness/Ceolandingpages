@@ -4,6 +4,7 @@ import { invokeLLM } from "./_core/llm";
 import { insertRoadmap, getRoadmapById, getAllRoadmaps, calculateLeadScore } from "./db";
 import { calculateBusinessHealthScore, getBenchmarkData, getGapAnalysis } from "./scoring";
 import { pushLeadToGHL } from "./ghlWebhook";
+import { fireHyrosLead, getHyrosPixelsForPage } from "./trackingService";
 import { checkRateLimit, getRateLimitIdentifier } from "./rateLimit";
 import { TRPCError } from "@trpc/server";
 import { logger } from "./_core/logger";
@@ -851,6 +852,17 @@ ${input.biggestFrustration}
         }).catch(err => {
           logger.error({ err }, "Failed to push lead to GHL");
         });
+
+        // Push lead to Hyros (async, don't block response)
+        getHyrosPixelsForPage("quiz").then((hyrosPixels) => {
+          for (const px of hyrosPixels) {
+            fireHyrosLead(px.apiKey, {
+              email: input.email,
+              source: "Titan Quiz",
+              tags: ["titan-quiz-lead", `score-${leadScore >= 70 ? "hot" : leadScore >= 40 ? "warm" : "cold"}`],
+            }).catch((err) => logger.error({ err }, "Hyros lead failed for quiz submission"));
+          }
+        }).catch((err) => logger.error({ err }, "Failed to get Hyros pixels for quiz"));
 
         return {
           id: roadmapId,
