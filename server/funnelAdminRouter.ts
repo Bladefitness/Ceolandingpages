@@ -620,7 +620,7 @@ export const funnelAdminRouter = router({
       .input(
         z.object({
           name: z.string().min(1),
-          platform: z.enum(["facebook", "google_analytics", "google_tag_manager", "tiktok", "custom"]),
+          platform: z.enum(["facebook", "google_analytics", "google_tag_manager", "tiktok", "hyros", "custom"]),
           pixelId: z.string().min(1),
           accessToken: z.string().optional(),
           pageScope: z.string().optional(),
@@ -647,7 +647,7 @@ export const funnelAdminRouter = router({
         z.object({
           id: z.number(),
           name: z.string().optional(),
-          platform: z.enum(["facebook", "google_analytics", "google_tag_manager", "tiktok", "custom"]).optional(),
+          platform: z.enum(["facebook", "google_analytics", "google_tag_manager", "tiktok", "hyros", "custom"]).optional(),
           pixelId: z.string().optional(),
           accessToken: z.string().optional(),
           pageScope: z.string().optional(),

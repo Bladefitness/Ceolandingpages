@@ -44,7 +44,7 @@ import { Plus, Pencil, ToggleLeft, ToggleRight, Trash2, Radio } from "lucide-rea
 
 const pixelSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  platform: z.enum(["facebook", "google_analytics", "google_tag_manager", "tiktok", "custom"]),
+  platform: z.enum(["facebook", "google_analytics", "google_tag_manager", "tiktok", "hyros", "custom"]),
   pixelId: z.string().min(1, "Pixel/Measurement ID is required"),
   accessToken: z.string().optional(),
   pageScope: z.string().optional(), // JSON string
@@ -77,6 +77,11 @@ const PLATFORM_CONFIG: Record<string, { label: string; color: string; idLabel: s
     label: "TikTok",
     color: "bg-pink-500/20 text-pink-400 border-pink-500/30",
     idLabel: "Pixel ID",
+  },
+  hyros: {
+    label: "Hyros",
+    color: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    idLabel: "Script Hash (ph parameter)",
   },
   custom: {
     label: "Custom",
@@ -116,6 +121,15 @@ const DEFAULT_EVENTS: Record<string, Record<string, string>> = {
     upsell_accept: "CompletePayment",
     downsell_view: "ViewContent",
     downsell_accept: "CompletePayment",
+  },
+  hyros: {
+    page_view: "PageView",
+    checkout_start: "InitiateCheckout",
+    purchase: "Purchase",
+    upsell_view: "ViewContent",
+    upsell_accept: "Purchase",
+    downsell_view: "ViewContent",
+    downsell_accept: "Purchase",
   },
 };
 
@@ -567,22 +581,24 @@ export default function TrackingSettings() {
                 )}
               />
 
-              {/* Access Token — only for Facebook */}
-              {watchedPlatform === "facebook" && (
+              {/* Access Token / API Key — for Facebook (CAPI) and Hyros */}
+              {(watchedPlatform === "facebook" || watchedPlatform === "hyros") && (
                 <FormField
                   control={form.control}
                   name="accessToken"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-slate-300">
-                        Access Token{" "}
-                        <span className="text-slate-500 font-normal">(optional)</span>
+                        {watchedPlatform === "hyros" ? "API Key" : "Access Token"}{" "}
+                        <span className="text-slate-500 font-normal">
+                          ({watchedPlatform === "hyros" ? "required for server-side tracking" : "optional, for CAPI"})
+                        </span>
                       </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="password"
-                          placeholder="EAAxxxxxxxxxxxxxxx"
+                          placeholder={watchedPlatform === "hyros" ? "API_xxxxxxxxxxxxxxx" : "EAAxxxxxxxxxxxxxxx"}
                           className="bg-slate-800 border-slate-600 text-slate-200 placeholder:text-slate-500 font-mono"
                         />
                       </FormControl>

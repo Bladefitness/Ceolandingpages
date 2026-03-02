@@ -227,6 +227,7 @@ export const trackingPixels = mysqlTable("trackingPixels", {
     "google_analytics",
     "google_tag_manager",
     "tiktok",
+    "hyros",
     "custom",
   ]).notNull(),
   pixelId: varchar("pixelId", { length: 255 }).notNull(),

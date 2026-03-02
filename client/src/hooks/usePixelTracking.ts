@@ -31,6 +31,15 @@ const DEFAULT_EVENT_MAPPINGS: Record<string, Record<string, string>> = {
     downsell_accept: "CompletePayment",
   },
   google_tag_manager: {},
+  hyros: {
+    page_view: "PageView",
+    checkout_start: "InitiateCheckout",
+    purchase: "Purchase",
+    upsell_view: "ViewContent",
+    upsell_accept: "Purchase",
+    downsell_view: "ViewContent",
+    downsell_accept: "Purchase",
+  },
 };
 
 type PixelConfig = {
@@ -139,6 +148,17 @@ function injectTikTokPixel(pixelId: string): void {
   document.head.appendChild(script);
 }
 
+function injectHyrosScript(pixelId: string): void {
+  const key = `hyros_${pixelId}`;
+  if (injectedPixels.has(key)) return;
+  injectedPixels.add(key);
+
+  const script = document.createElement("script");
+  script.type = "text/javascript";
+  script.src = `https://212704.t.hyros.com/v1/lst/universal-script?ph=${pixelId}&tag=!clicked&ref_url=${encodeURI(document.URL)}`;
+  document.head.appendChild(script);
+}
+
 function injectPixelScript(pixel: PixelConfig): void {
   switch (pixel.platform) {
     case "facebook":
@@ -152,6 +172,9 @@ function injectPixelScript(pixel: PixelConfig): void {
       break;
     case "tiktok":
       injectTikTokPixel(pixel.pixelId);
+      break;
+    case "hyros":
+      injectHyrosScript(pixel.pixelId);
       break;
   }
 }

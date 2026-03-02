@@ -11,7 +11,7 @@ import {
   funnelOrderItems,
 } from "../drizzle/schema";
 import { pushPurchaseToGHL, pushToZapier } from "./ghlWebhook";
-import { fireFacebookCapi, getCapiPixelsForPage } from "./trackingService";
+import { fireFacebookCapi, getCapiPixelsForPage, fireHyrosSale, getHyrosPixelsForPage } from "./trackingService";
 import { logger } from "./_core/logger";
 
 export const funnelRouter = router({
@@ -203,6 +203,17 @@ export const funnelRouter = router({
               }).catch((err) => logger.error({ err }, "CAPI fire failed for course purchase"));
             }
           }).catch((err) => logger.error({ err }, "Failed to get CAPI pixels for course"));
+
+          // Fire Hyros sale for purchase
+          getHyrosPixelsForPage("sales").then((hyrosPixels) => {
+            for (const px of hyrosPixels) {
+              fireHyrosSale(px.apiKey, {
+                email: order.email,
+                amount: 197,
+                product: "FB Ads Mastery Course",
+              }).catch((err) => logger.error({ err }, "Hyros sale failed for course purchase"));
+            }
+          }).catch((err) => logger.error({ err }, "Failed to get Hyros pixels for course"));
         }
 
         return { success: true };
@@ -314,6 +325,17 @@ export const funnelRouter = router({
           }
         }).catch((err) => logger.error({ err }, "Failed to get CAPI pixels for upsell"));
 
+        // Fire Hyros sale for upsell
+        getHyrosPixelsForPage("upsell").then((hyrosPixels) => {
+          for (const px of hyrosPixels) {
+            fireHyrosSale(px.apiKey, {
+              email: order.email,
+              amount: 997,
+              product: "Health Pro CEO Vault",
+            }).catch((err) => logger.error({ err }, "Hyros sale failed for vault purchase"));
+          }
+        }).catch((err) => logger.error({ err }, "Failed to get Hyros pixels for upsell"));
+
         return {
           success: true,
           paymentId: payment.id,
@@ -411,6 +433,17 @@ export const funnelRouter = router({
             }).catch((err) => logger.error({ err }, "CAPI fire failed for session purchase"));
           }
         }).catch((err) => logger.error({ err }, "Failed to get CAPI pixels for downsell"));
+
+        // Fire Hyros sale for downsell
+        getHyrosPixelsForPage("downsell").then((hyrosPixels) => {
+          for (const px of hyrosPixels) {
+            fireHyrosSale(px.apiKey, {
+              email: order.email,
+              amount: product.priceInCents / 100,
+              product: "Strategy Session",
+            }).catch((err) => logger.error({ err }, "Hyros sale failed for session purchase"));
+          }
+        }).catch((err) => logger.error({ err }, "Failed to get Hyros pixels for downsell"));
 
         return {
           success: true,
