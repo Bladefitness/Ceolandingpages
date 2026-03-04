@@ -6,15 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Trash2, Plus, Save, ExternalLink, Eye, EyeOff, Monitor, Smartphone, Upload, X, FileEdit, Sparkles } from "lucide-react";
+import { Trash2, Plus, Save, ExternalLink, Eye, EyeOff, Monitor, Smartphone, Upload, X, FileEdit, Sparkles, Film, Check } from "lucide-react";
 import { AiAssistantPanel } from "@/components/admin/AiAssistantPanel";
 
-type PageSlug = "sales" | "upsell" | "downsell" | "thank-you" | "book-session" | "call-prep";
+type PageSlug = "sales" | "sales-dual" | "agency" | "quiz" | "upsell" | "downsell" | "thank-you" | "book-session" | "call-prep";
 
-const PAGE_SLUGS: PageSlug[] = ["sales", "upsell", "downsell", "thank-you", "book-session", "call-prep"];
+const PAGE_SLUGS: PageSlug[] = ["sales", "sales-dual", "agency", "quiz", "upsell", "downsell", "thank-you", "book-session", "call-prep"];
 
 const SLUG_TO_PATH: Record<PageSlug, string> = {
   sales: "/fb-ads-course",
+  "sales-dual": "/fb-ads-course?flow=dual",
+  agency: "/agency",
+  quiz: "/quiz",
   upsell: "/offer/vault",
   downsell: "/offer/session",
   "thank-you": "/thank-you",
@@ -24,6 +27,9 @@ const SLUG_TO_PATH: Record<PageSlug, string> = {
 
 const SLUG_LABELS: Record<PageSlug, string> = {
   sales: "Sales Page",
+  "sales-dual": "Sales (Dual Path)",
+  agency: "Agency Page",
+  quiz: "Quiz / Roadmap",
   upsell: "Upsell Page",
   downsell: "Downsell Page",
   "thank-you": "Thank You Page",
@@ -133,6 +139,99 @@ function formToPayload(slug: PageSlug, form: FormState) {
     valueStackItems: JSON.stringify(form.valueStackItems),
     faqItems: JSON.stringify(form.faqItems),
   };
+}
+
+// ── Mux Video Picker ──
+
+interface MuxVideoPickerProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function MuxVideoPicker({ value, onChange }: MuxVideoPickerProps) {
+  const [open, setOpen] = useState(false);
+  const assetsQuery = trpc.funnelAdmin.mux.list.useQuery(undefined, { enabled: open });
+  const assets = assetsQuery.data ?? [];
+  const readyAssets = assets.filter((a) => a.status === "ready" && a.playbackId);
+
+  // Check if current value matches a Mux playback ID
+  const currentMuxAsset = readyAssets.find((a) => a.playbackId === value);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Mux playback ID or YouTube/Vimeo URL"
+          className="bg-slate-800 border-slate-600 text-slate-200 placeholder:text-slate-500"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen(!open)}
+          className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-100 whitespace-nowrap flex-shrink-0"
+        >
+          <Film className="h-3.5 w-3.5 mr-1.5" />
+          Pick Video
+        </Button>
+      </div>
+
+      {currentMuxAsset && (
+        <div className="flex items-center gap-2 text-xs text-emerald-400">
+          <Check className="h-3 w-3" />
+          <span>Mux video: {currentMuxAsset.title ?? currentMuxAsset.filename ?? "Untitled"}</span>
+        </div>
+      )}
+
+      <p className="text-xs text-slate-500">
+        Paste a Mux playback ID (from Video Library), YouTube URL, or Vimeo URL.
+      </p>
+
+      {open && (
+        <div className="rounded-lg border border-slate-700 bg-slate-800/80 max-h-64 overflow-y-auto">
+          {assetsQuery.isLoading ? (
+            <div className="p-4 text-center text-slate-400 text-sm">Loading videos...</div>
+          ) : readyAssets.length === 0 ? (
+            <div className="p-4 text-center text-slate-400 text-sm">
+              No ready videos.{" "}
+              <a href="/admin/video-library" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
+                Upload one first →
+              </a>
+            </div>
+          ) : (
+            readyAssets.map((asset) => (
+              <button
+                key={asset.id}
+                type="button"
+                onClick={() => {
+                  onChange(asset.playbackId!);
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition hover:bg-slate-700/60 ${
+                  value === asset.playbackId ? "bg-slate-700/40" : ""
+                }`}
+              >
+                <img
+                  src={`https://image.mux.com/${asset.playbackId}/thumbnail.webp?time=2&width=80`}
+                  alt=""
+                  className="w-16 h-9 rounded object-cover bg-slate-900 flex-shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-slate-200 truncate">{asset.title ?? asset.filename ?? "Untitled"}</p>
+                  <p className="text-xs text-slate-500 font-mono truncate">{asset.playbackId}</p>
+                </div>
+                {value === asset.playbackId && (
+                  <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                )}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface ValueStackEditorProps {
@@ -553,21 +652,11 @@ function PageEditorPanel({ slug, showPreview }: PageEditorPanelProps) {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-slate-300">Video URL</Label>
-          <Input
+          <Label className="text-slate-300">Video</Label>
+          <MuxVideoPicker
             value={form.videoUrl}
-            onChange={(e) => setField("videoUrl", e.target.value)}
-            placeholder="https://..."
-            className="bg-slate-800 border-slate-600 text-slate-200 placeholder:text-slate-500"
+            onChange={(val) => setField("videoUrl", val)}
           />
-          <a
-            href="/admin/video-library"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-blue-400 hover:text-blue-300 mt-1 inline-block"
-          >
-            Upload via Video Library →
-          </a>
         </div>
       </div>
 
