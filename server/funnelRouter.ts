@@ -67,20 +67,31 @@ export const funnelRouter = router({
         });
 
         // Create Whop checkout configuration
-        const checkoutConfig = await whop.checkoutConfigurations.create({
-          plan: {
-            company_id: ENV.whopCompanyId,
-            initial_price: product.priceInCents / 100,
-            plan_type: "one_time",
-            currency: "usd",
-          },
-          metadata: {
-            orderId: String(orderId),
-            email: input.email,
-            firstName: input.firstName,
-            productSlug: slug,
-          },
-        });
+        // Use pre-created plan ID when available, fall back to inline plan creation
+        const checkoutConfig = product.whopPlanId
+          ? await whop.checkoutConfigurations.create({
+              plan_id: product.whopPlanId,
+              metadata: {
+                orderId: String(orderId),
+                email: input.email,
+                firstName: input.firstName,
+                productSlug: slug,
+              },
+            })
+          : await whop.checkoutConfigurations.create({
+              plan: {
+                company_id: ENV.whopCompanyId,
+                initial_price: product.priceInCents / 100,
+                plan_type: "one_time",
+                currency: "usd",
+              },
+              metadata: {
+                orderId: String(orderId),
+                email: input.email,
+                firstName: input.firstName,
+                productSlug: slug,
+              },
+            });
 
         return {
           checkoutConfigId: checkoutConfig.id,
