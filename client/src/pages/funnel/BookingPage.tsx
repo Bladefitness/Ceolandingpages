@@ -43,12 +43,6 @@ export default function BookingPage() {
     }
   }, [sessionId]);
 
-  // Guard: redirect if no orderId (skip in preview mode)
-  if (!orderId && !isPreviewMode) {
-    navigate("/fb-ads-course");
-    return null;
-  }
-
   const hasVault = purchasedProducts.includes("ceo-vault");
   const productLabel = hasVault ? "CEO Vault" : "Strategy Session";
 
