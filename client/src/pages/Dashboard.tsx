@@ -520,8 +520,7 @@ export default function Dashboard() {
             <div className="mx-auto max-w-3xl">
               <FunnelVideoPlayer
                 videoUrl={trainingVideoUrl}
-                overlayStyle="classy"
-                overlayColor="#2563eb"
+                overlayStyle={(salesPageContent?.videoOverlayStyle as any) ?? "front-and-center"}
                 title="Training Video"
               />
             </div>
