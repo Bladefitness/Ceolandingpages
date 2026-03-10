@@ -770,6 +770,14 @@ export function FunnelVideoPlayer({
   const vimeoIframeRef = useRef<HTMLIFrameElement | null>(null);
   const muxPlayerRef = useRef<any>(null);
   const muxSeekDone = useRef(false);
+  const muxPlayStarted = useRef(false);
+
+  // Programmatic play for Mux — more reliable than autoPlay attribute
+  // autoPlay can resume from a cached position; this forces start from 0
+  useEffect(() => {
+    if (parsed.source !== "mux") return;
+    muxPlayStarted.current = false;
+  }, [parsed.source, parsed.videoId]);
 
   // Video heatmap tracking
   const enableHeatmap = !!(heatmapVideoId && heatmapPageSlug && heatmapSessionId);
@@ -891,34 +899,45 @@ export function FunnelVideoPlayer({
 
           {parsed.source === "mux" && (
             <MuxPlayer
-              ref={muxPlayerRef}
+              ref={(el: any) => {
+                muxPlayerRef.current = el;
+                if (el && !muxPlayStarted.current) {
+                  // Access the underlying <video> element inside the Mux web component
+                  const forceStartFromZero = () => {
+                    const video = el.media?.nativeEl ?? el.shadowRoot?.querySelector("video") ?? el;
+                    if (video) {
+                      video.currentTime = 0;
+                      muxPlayStarted.current = true;
+                      const p = video.play?.();
+                      if (p?.catch) p.catch(() => {});
+                    }
+                  };
+                  // Wait for the underlying video to be ready
+                  if (el.media?.nativeEl || el.shadowRoot?.querySelector("video")) {
+                    setTimeout(forceStartFromZero, 150);
+                  } else {
+                    el.addEventListener("canplay", () => {
+                      setTimeout(forceStartFromZero, 50);
+                    }, { once: true });
+                  }
+                }
+              }}
               playbackId={parsed.videoId ?? ""}
               autoPlay="muted"
               muted
               playsInline
               startTime={0}
               disableCookies
+              preload="auto"
               className="aspect-video w-full"
               onLoadStart={() => {
                 muxSeekDone.current = false;
+                muxPlayStarted.current = false;
               }}
               onLoadedMetadata={(e: any) => {
-                // Force seek to 0 immediately when metadata is available
-                const el = muxPlayerRef.current;
-                if (el && !muxSeekDone.current) {
-                  el.currentTime = 0;
-                  muxSeekDone.current = true;
-                }
                 setPlayerReady(true);
                 if (enableHeatmap) {
                   heatmap.handleLoadedMetadata(e.target?.duration ?? 0);
-                }
-              }}
-              onPlay={() => {
-                // Final safeguard: force to 0 on first play if not at start
-                const el = muxPlayerRef.current;
-                if (el && el.currentTime > 2) {
-                  el.currentTime = 0;
                 }
               }}
               onTimeUpdate={enableHeatmap ? (e: any) => {
