@@ -16,6 +16,15 @@ import { pushPurchaseToGHL, pushToZapier } from "./ghlWebhook";
 import { fireFacebookCapi, getCapiPixelsForPage, fireHyrosSale, getHyrosPixelsForPage } from "./trackingService";
 import { logger } from "./_core/logger";
 
+/** Read checkout_test_mode from DB and return a properly configured Whop client */
+async function getWhopWithTestMode() {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+  const [setting] = await db.select().from(siteSettings).where(eq(siteSettings.key, "checkout_test_mode")).limit(1);
+  const isTestMode = setting?.value === "true" ? true : setting?.value === "false" ? false : undefined;
+  return { whop: getWhop(isTestMode), isTestMode: isTestMode ?? ENV.whopSandbox };
+}
+
 export const funnelRouter = router({
   checkout: router({
     /**
@@ -35,10 +44,7 @@ export const funnelRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-        // Check DB for test mode override
-        const [testModeSetting] = await db.select().from(siteSettings).where(eq(siteSettings.key, "checkout_test_mode")).limit(1);
-        const isTestMode = testModeSetting?.value === "true" ? true : testModeSetting?.value === "false" ? false : undefined;
-        const whop = getWhop(isTestMode);
+        const { whop, isTestMode } = await getWhopWithTestMode();
 
         // Get the requested product (defaults to fb-ads-course for backward compat)
         const slug = input.productSlug ?? "fb-ads-course";
@@ -101,7 +107,7 @@ export const funnelRouter = router({
           checkoutConfigId: checkoutConfig.id,
           orderId,
           amount: product.priceInCents,
-          sandbox: isTestMode ?? ENV.whopSandbox,
+          sandbox: isTestMode,
         };
       }),
 
@@ -125,7 +131,7 @@ export const funnelRouter = router({
         let memberId = input.whopMemberId ?? null;
         if (!memberId) {
           try {
-            const whop = getWhop();
+            const { whop } = await getWhopWithTestMode();
             if (input.whopPaymentId) {
               // Try direct payment lookup
               const payment = await whop.payments.retrieve(input.whopPaymentId);
@@ -248,7 +254,7 @@ export const funnelRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-        const whop = getWhop();
+        const { whop } = await getWhopWithTestMode();
 
         // Get order with stored member ID
         const [order] = await db
@@ -371,7 +377,7 @@ export const funnelRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-        const whop = getWhop();
+        const { whop } = await getWhopWithTestMode();
 
         const [order] = await db
           .select()
