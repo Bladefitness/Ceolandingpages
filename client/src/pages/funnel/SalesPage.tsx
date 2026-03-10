@@ -16,6 +16,9 @@ import { FunnelVideoPlayer } from "@/components/funnel/FunnelVideoPlayer";
 import { PathSelector } from "@/components/funnel/PathSelector";
 import { PricingTiers } from "@/components/funnel/PricingTiers";
 import { ExitIntentPopup } from "@/components/funnel/ExitIntentPopup";
+import { CaseStudyCard } from "@/components/funnel/CaseStudyCard";
+import { CaseStudyCard2 } from "@/components/funnel/CaseStudyCard2";
+import { CaseStudyCard3 } from "@/components/funnel/CaseStudyCard3";
 import { getSessionId } from "@/lib/funnelTracking";
 import { usePixelTracking } from "@/hooks/usePixelTracking";
 
@@ -214,51 +217,49 @@ export default function SalesPage() {
     <div className="min-h-screen" style={{ background: "var(--titan-background)" }}>
       <FunnelNav />
 
-      {/* Hero + Path Selector — dark background for card contrast */}
-      <section className="bg-[#2a2a2a] pb-10">
-        <div className="mx-auto max-w-4xl px-4 pt-12 text-center">
-          <div className="mb-4 inline-block rounded-full bg-lime-400/10 px-4 py-1 text-sm font-semibold text-lime-400">
-            For Health Professionals Only
-          </div>
-          <h1 className="mb-4 text-4xl font-bold leading-tight text-white md:text-5xl">
-            {content.headline ?? (
-              <>
-                The Exact Facebook Ad System That Fills Health Practices With{" "}
-                <span className="text-lime-400">
-                  20+ New Patients Per Month
-                </span>
-              </>
-            )}
-          </h1>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-gray-300">
-            {content.subheadline ?? "Stop wasting money on ads that don't convert. Learn the proven system used by 500+ health professionals to predictably generate high-quality patient leads on autopilot."}
-          </p>
+      {/* Hero */}
+      <section className="mx-auto max-w-4xl px-4 py-12 text-center">
+        <div className="mb-4 inline-block rounded-full bg-blue-50 px-4 py-1 text-sm font-semibold text-blue-600">
+          For Health Professionals Only
+        </div>
+        <h1 className="mb-4 text-4xl font-bold leading-tight md:text-5xl" style={{ color: "var(--titan-text-primary)" }}>
+          {content.headline ?? (
+            <>
+              The Exact Facebook Ad System That Fills Health Practices With{" "}
+              <span style={{ background: "var(--titan-grad-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                20+ New Patients Per Month
+              </span>
+            </>
+          )}
+        </h1>
+        <p className="mx-auto mb-8 max-w-2xl text-lg" style={{ color: "var(--titan-text-secondary)" }}>
+          {content.subheadline ?? "Stop wasting money on ads that don't convert. Learn the proven system used by 500+ health professionals to predictably generate high-quality patient leads on autopilot."}
+        </p>
 
-          {/* VSL Video */}
-          {content.videoUrl ? (
-            <div className="mx-auto mb-8 max-w-3xl">
-              <FunnelVideoPlayer
-                videoUrl={content.videoUrl}
-                thumbnailUrl={content.heroImageUrl}
-                previewUrl={content.previewUrl}
-                overlayStyle={content.videoOverlayStyle as any}
-                title="Sales Video"
-                onWatchProgress={handleWatchProgress}
-                heatmapVideoId={content.videoUrl}
-                heatmapPageSlug="sales"
-                heatmapSessionId={sessionId}
-              />
-            </div>
-          ) : (
-            <div className="mx-auto mb-8 max-w-3xl overflow-hidden rounded-2xl border border-gray-700 bg-gray-900 shadow-xl" style={{ aspectRatio: "16/9" }}>
-              <div className="flex h-full items-center justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                  <span className="text-white text-sm">No video set</span>
-                </div>
+        {/* VSL Video */}
+        {content.videoUrl ? (
+          <div className="mx-auto mb-8 max-w-3xl">
+            <FunnelVideoPlayer
+              videoUrl={content.videoUrl}
+              thumbnailUrl={content.heroImageUrl}
+              previewUrl={content.previewUrl}
+              overlayStyle={content.videoOverlayStyle as any}
+              title="Sales Video"
+              onWatchProgress={handleWatchProgress}
+              heatmapVideoId={content.videoUrl}
+              heatmapPageSlug="sales"
+              heatmapSessionId={sessionId}
+            />
+          </div>
+        ) : (
+          <div className="mx-auto mb-8 max-w-3xl overflow-hidden rounded-2xl border border-[var(--titan-border)] bg-gray-900 shadow-xl" style={{ aspectRatio: "16/9" }}>
+            <div className="flex h-full items-center justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                <span className="text-white text-sm">No video set</span>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Path Selector — directly under video */}
         {showDualPath && (
@@ -288,6 +289,27 @@ export default function SalesPage() {
               <span className="text-sm font-semibold" style={{ color: "var(--titan-text-primary)" }}>{label}</span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Case Study Card */}
+      <section className="py-12">
+        <div className="mx-auto max-w-4xl px-4">
+          <CaseStudyCard />
+        </div>
+      </section>
+
+      {/* Case Study Card 2 */}
+      <section className="pb-12">
+        <div className="mx-auto max-w-4xl px-4">
+          <CaseStudyCard2 />
+        </div>
+      </section>
+
+      {/* Case Study Card 3 */}
+      <section className="pb-12">
+        <div className="mx-auto max-w-4xl px-4">
+          <CaseStudyCard3 />
         </div>
       </section>
 
