@@ -18,6 +18,34 @@ import { FunnelVideoPlayer } from "@/components/funnel/FunnelVideoPlayer";
 
 type PlaybookType = "titan" | "offer" | "facebook" | "instagram" | "leadgen";
 
+function LoadingScreen({ gifs, messages }: { gifs: string[]; messages: string[] }) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % Math.max(gifs.length, messages.length));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [gifs.length, messages.length]);
+
+  const gifSrc = gifs[index % gifs.length];
+  const message = messages[index % messages.length];
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center space-y-4">
+        <img
+          src={gifSrc}
+          alt="Loading"
+          className="mx-auto w-48 h-48 object-contain rounded-xl"
+        />
+        <h2 className="text-2xl font-semibold text-gray-900">{message}</h2>
+        <p className="text-gray-600">Calculating your personalized roadmap</p>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [, params] = useRoute("/dashboard/:id");
   const roadmapId = params?.id ? parseInt(params.id) : null;
@@ -148,18 +176,23 @@ export default function Dashboard() {
     );
   }
 
+  // Rotating loading GIFs and messages
+  const LOADING_GIFS = [
+    "/loading-1.gif",
+    "/loading-2.gif",
+    "/loading-3.gif",
+    "/loading-4.gif",
+    "/loading-5.gif",
+  ];
+  const LOADING_MESSAGES = [
+    "Analyzing your business...",
+    "Crunching the numbers...",
+    "Building your roadmap...",
+    "Almost there...",
+  ];
+
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto text-blue-600" />
-          <h2 className="text-2xl font-semibold text-gray-900">
-            Analyzing your business...
-          </h2>
-          <p className="text-gray-600">Calculating your personalized roadmap</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen gifs={LOADING_GIFS} messages={LOADING_MESSAGES} />;
   }
 
   if (error || !roadmap) {
