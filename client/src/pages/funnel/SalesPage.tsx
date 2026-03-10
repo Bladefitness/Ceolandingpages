@@ -140,6 +140,7 @@ export default function SalesPage() {
     videoUrl: cmsContent?.videoUrl ?? null,
     heroImageUrl: cmsContent?.heroImageUrl ?? null,
     videoOverlayStyle: cmsContent?.videoOverlayStyle ?? "front-and-center",
+    previewUrl: (cmsContent as any)?.previewUrl ?? null,
   };
 
   const { fireEvent } = usePixelTracking("sales");
@@ -213,49 +214,56 @@ export default function SalesPage() {
     <div className="min-h-screen" style={{ background: "var(--titan-background)" }}>
       <FunnelNav />
 
-      {/* Hero */}
-      <section className="mx-auto max-w-4xl px-4 py-12 text-center">
-        <div className="mb-4 inline-block rounded-full bg-blue-50 px-4 py-1 text-sm font-semibold text-blue-600">
-          For Health Professionals Only
-        </div>
-        <h1 className="mb-4 text-4xl font-bold leading-tight md:text-5xl" style={{ color: "var(--titan-text-primary)" }}>
-          {content.headline ?? (
-            <>
-              The Exact Facebook Ad System That Fills Health Practices With{" "}
-              <span style={{ background: "var(--titan-grad-primary)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                20+ New Patients Per Month
-              </span>
-            </>
-          )}
-        </h1>
-        <p className="mx-auto mb-8 max-w-2xl text-lg" style={{ color: "var(--titan-text-secondary)" }}>
-          {content.subheadline ?? "Stop wasting money on ads that don't convert. Learn the proven system used by 500+ health professionals to predictably generate high-quality patient leads on autopilot."}
-        </p>
-
-        {/* VSL Video */}
-        {content.videoUrl ? (
-          <div className="mx-auto mb-8 max-w-3xl">
-            <FunnelVideoPlayer
-              videoUrl={content.videoUrl}
-              thumbnailUrl={content.heroImageUrl}
-              overlayStyle={content.videoOverlayStyle as any}
-              title="Sales Video"
-              onWatchProgress={handleWatchProgress}
-              heatmapVideoId={content.videoUrl}
-              heatmapPageSlug="sales"
-              heatmapSessionId={sessionId}
-            />
+      {/* Hero + Path Selector — dark background for card contrast */}
+      <section className="bg-[#2a2a2a] pb-10">
+        <div className="mx-auto max-w-4xl px-4 pt-12 text-center">
+          <div className="mb-4 inline-block rounded-full bg-lime-400/10 px-4 py-1 text-sm font-semibold text-lime-400">
+            For Health Professionals Only
           </div>
-        ) : (
-          <div className="mx-auto mb-8 max-w-3xl overflow-hidden rounded-2xl border border-[var(--titan-border)] bg-gray-900 shadow-xl" style={{ aspectRatio: "16/9" }}>
-            <div className="flex h-full items-center justify-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-                <span className="text-white text-sm">No video set</span>
+          <h1 className="mb-4 text-4xl font-bold leading-tight text-white md:text-5xl">
+            {content.headline ?? (
+              <>
+                The Exact Facebook Ad System That Fills Health Practices With{" "}
+                <span className="text-lime-400">
+                  20+ New Patients Per Month
+                </span>
+              </>
+            )}
+          </h1>
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-gray-300">
+            {content.subheadline ?? "Stop wasting money on ads that don't convert. Learn the proven system used by 500+ health professionals to predictably generate high-quality patient leads on autopilot."}
+          </p>
+
+          {/* VSL Video */}
+          {content.videoUrl ? (
+            <div className="mx-auto mb-8 max-w-3xl">
+              <FunnelVideoPlayer
+                videoUrl={content.videoUrl}
+                thumbnailUrl={content.heroImageUrl}
+                previewUrl={content.previewUrl}
+                overlayStyle={content.videoOverlayStyle as any}
+                title="Sales Video"
+                onWatchProgress={handleWatchProgress}
+                heatmapVideoId={content.videoUrl}
+                heatmapPageSlug="sales"
+                heatmapSessionId={sessionId}
+              />
+            </div>
+          ) : (
+            <div className="mx-auto mb-8 max-w-3xl overflow-hidden rounded-2xl border border-gray-700 bg-gray-900 shadow-xl" style={{ aspectRatio: "16/9" }}>
+              <div className="flex h-full items-center justify-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-white text-sm">No video set</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
+        {/* Path Selector — directly under video */}
+        {showDualPath && (
+          <PathSelector onSelectCourses={handleSelectCourses} onSelectAgency={handleSelectAgency} />
+        )}
       </section>
 
       {/* Social Proof Bar — reveals at 25% watch (when smart-cta enabled) */}
@@ -313,21 +321,15 @@ export default function SalesPage() {
         </div>
       </section>
 
-      {/* === DUAL-PATH FLOW: Path Selector → Tiers (no gate) === */}
-      {showDualPath && (
-        <>
-          <PathSelector onSelectCourses={handleSelectCourses} onSelectAgency={handleSelectAgency} />
-
-          {selectedPath === "courses" && (
-            <div ref={pricingTiersRef}>
-              <PricingTiers
-                onPurchaseComplete={handleTierPurchaseComplete}
-                sessionId={sessionId}
-                splitTestVariant={variant?.variantId}
-              />
-            </div>
-          )}
-        </>
+      {/* === DUAL-PATH FLOW: Tiers only (PathSelector moved under video) === */}
+      {showDualPath && selectedPath === "courses" && (
+        <div ref={pricingTiersRef}>
+          <PricingTiers
+            onPurchaseComplete={handleTierPurchaseComplete}
+            sessionId={sessionId}
+            splitTestVariant={variant?.variantId}
+          />
+        </div>
       )}
 
       {/* === ORIGINAL FLOW: Pricing + Checkout — reveals at 50%, pulses at 75% (when smart-cta enabled) === */}

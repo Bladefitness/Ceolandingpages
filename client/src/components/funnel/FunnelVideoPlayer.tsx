@@ -12,6 +12,7 @@ type PlayerState = "idle" | "playing-muted" | "playing-unmuted";
 interface FunnelVideoPlayerProps {
   videoUrl: string;
   thumbnailUrl?: string | null;
+  previewUrl?: string | null;
   overlayStyle?: OverlayStyle;
   overlayColor?: string;
   title?: string;
@@ -749,6 +750,7 @@ function Mp4Player({ src, videoRef, onCanPlay, onTimeUpdate, onSeeking, onSeeked
 export function FunnelVideoPlayer({
   videoUrl,
   thumbnailUrl,
+  previewUrl,
   overlayStyle = "front-and-center",
   overlayColor = "#3974FF",
   title = "Video",
@@ -761,7 +763,9 @@ export function FunnelVideoPlayer({
   const parsed = parseVideoUrl(videoUrl);
   const smartAutoplay = canSmartAutoplay(parsed.source);
 
-  const [state, setState] = useState<PlayerState>(smartAutoplay ? "playing-muted" : "idle");
+  // If a preview clip is provided, start in "preview" mode instead of autoplay
+  const hasPreview = !!previewUrl;
+  const [state, setState] = useState<PlayerState>(hasPreview ? "idle" : (smartAutoplay ? "playing-muted" : "idle"));
   const [playerReady, setPlayerReady] = useState(false);
 
   // Refs for different player types
@@ -847,13 +851,30 @@ export function FunnelVideoPlayer({
     <div
       className={`relative overflow-hidden rounded-2xl border border-[var(--titan-border)] bg-black shadow-xl ${className}`}
     >
-      {/* Idle State: Thumbnail + Play Button */}
+      {/* Idle State: Preview clip / Thumbnail + Play Button */}
       {state === "idle" && (
         <button
           onClick={handlePlayFromIdle}
           className="relative aspect-video w-full cursor-pointer group"
         >
-          {resolvedThumbnail ? (
+          {hasPreview ? (
+            /\.(gif)(\?.*)?$/i.test(previewUrl!) ? (
+              <img
+                src={previewUrl!}
+                alt={title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <video
+                src={previewUrl!}
+                className="h-full w-full object-cover"
+                autoPlay
+                muted
+                playsInline
+                loop
+              />
+            )
+          ) : resolvedThumbnail ? (
             <img
               src={resolvedThumbnail}
               alt={title}

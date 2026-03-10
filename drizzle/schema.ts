@@ -174,6 +174,7 @@ export const funnelPageContent = mysqlTable("funnelPageContent", {
   heroImageUrl: varchar("heroImageUrl", { length: 500 }),
   videoUrl: varchar("videoUrl", { length: 500 }),
   videoOverlayStyle: varchar("videoOverlayStyle", { length: 50 }),
+  previewUrl: varchar("previewUrl", { length: 500 }),
   senjaWidgetId: varchar("senjaWidgetId", { length: 255 }),
   headerTrackingCode: text("headerTrackingCode"), // Custom scripts injected into <head>
   bodyTrackingCode: text("bodyTrackingCode"), // Custom scripts injected after <body>

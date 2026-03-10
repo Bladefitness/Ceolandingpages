@@ -206,6 +206,7 @@ export const funnelAdminRouter = router({
           heroImageUrl: z.string().optional(),
           videoUrl: z.string().optional(),
           videoOverlayStyle: z.string().optional(),
+          previewUrl: z.string().optional(),
           senjaWidgetId: z.string().optional(),
           headerTrackingCode: z.string().optional(),
           bodyTrackingCode: z.string().optional(),
@@ -275,7 +276,7 @@ export const funnelAdminRouter = router({
         const allowedFields = [
           "headline", "subheadline", "bodyText", "ctaText", "declineText",
           "originalPrice", "salePrice", "valueStackItems", "faqItems",
-          "heroImageUrl", "videoUrl", "videoOverlayStyle", "senjaWidgetId",
+          "heroImageUrl", "videoUrl", "videoOverlayStyle", "previewUrl", "senjaWidgetId",
           "headerTrackingCode", "bodyTrackingCode", "isActive",
         ];
         for (const field of allowedFields) {

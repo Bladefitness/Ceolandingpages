@@ -9,9 +9,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Trash2, Plus, Save, ExternalLink, Eye, EyeOff, Monitor, Smartphone, Upload, X, FileEdit, Sparkles, Film, Check } from "lucide-react";
 import { AiAssistantPanel } from "@/components/admin/AiAssistantPanel";
 
-type PageSlug = "sales" | "sales-dual" | "agency" | "quiz" | "upsell" | "downsell" | "thank-you" | "book-session" | "call-prep" | "masterclass";
+type PageSlug = "sales" | "sales-dual" | "agency" | "quiz" | "upsell" | "downsell" | "thank-you" | "book-session" | "call-prep" | "masterclass" | "roadmap-info";
 
-const PAGE_SLUGS: PageSlug[] = ["sales", "sales-dual", "masterclass", "agency", "quiz", "upsell", "downsell", "thank-you", "book-session", "call-prep"];
+const PAGE_SLUGS: PageSlug[] = ["sales", "sales-dual", "masterclass", "agency", "quiz", "upsell", "downsell", "thank-you", "book-session", "call-prep", "roadmap-info"];
 
 const SLUG_TO_PATH: Record<PageSlug, string> = {
   sales: "/fb-ads-course",
@@ -24,6 +24,7 @@ const SLUG_TO_PATH: Record<PageSlug, string> = {
   "book-session": "/book-session",
   "call-prep": "/call-prep",
   masterclass: "/masterclass",
+  "roadmap-info": "/roadmap-info",
 };
 
 const SLUG_LABELS: Record<PageSlug, string> = {
@@ -37,6 +38,7 @@ const SLUG_LABELS: Record<PageSlug, string> = {
   "book-session": "Booking Page",
   "call-prep": "Call Prep Page",
   masterclass: "Masterclass Opt-In",
+  "roadmap-info": "Roadmap Info",
 };
 
 interface FaqItem {
@@ -55,6 +57,7 @@ interface FormState {
   heroImageUrl: string;
   videoUrl: string;
   videoOverlayStyle: string;
+  previewUrl: string;
   senjaWidgetId: string;
   headerTrackingCode: string;
   bodyTrackingCode: string;
@@ -73,6 +76,7 @@ const EMPTY_FORM: FormState = {
   heroImageUrl: "",
   videoUrl: "",
   videoOverlayStyle: "front-and-center",
+  previewUrl: "",
   senjaWidgetId: "",
   headerTrackingCode: "",
   bodyTrackingCode: "",
@@ -122,6 +126,7 @@ function dataToForm(data: Record<string, unknown>): FormState {
     heroImageUrl: String(data.heroImageUrl ?? ""),
     videoUrl: String(data.videoUrl ?? ""),
     videoOverlayStyle: String(data.videoOverlayStyle ?? "front-and-center"),
+    previewUrl: String((data as any).previewUrl ?? ""),
     senjaWidgetId: String(data.senjaWidgetId ?? ""),
     headerTrackingCode: String(data.headerTrackingCode ?? ""),
     bodyTrackingCode: String(data.bodyTrackingCode ?? ""),
@@ -143,6 +148,7 @@ function formToPayload(slug: PageSlug, form: FormState) {
     heroImageUrl: form.heroImageUrl || undefined,
     videoUrl: form.videoUrl || undefined,
     videoOverlayStyle: form.videoOverlayStyle || undefined,
+    previewUrl: form.previewUrl || undefined,
     senjaWidgetId: form.senjaWidgetId || undefined,
     headerTrackingCode: form.headerTrackingCode || undefined,
     bodyTrackingCode: form.bodyTrackingCode || undefined,
@@ -686,6 +692,17 @@ function PageEditorPanel({ slug, showPreview }: PageEditorPanelProps) {
           <option value="none">None</option>
         </select>
         <p className="text-xs text-slate-500">Controls the "Click to Unmute" overlay shown during smart autoplay.</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-slate-300">Preview Clip URL</Label>
+        <Input
+          value={form.previewUrl}
+          onChange={(e) => setField("previewUrl", e.target.value)}
+          placeholder="https://... (5-10s MP4 or GIF)"
+          className="bg-slate-800 border-slate-600 text-slate-200"
+        />
+        <p className="text-xs text-slate-500">Short looping video/GIF shown before user clicks play. Bypasses autoplay issues. Leave empty to use normal autoplay.</p>
       </div>
 
       <div className="space-y-2">
