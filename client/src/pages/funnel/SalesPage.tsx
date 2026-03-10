@@ -96,12 +96,8 @@ export default function SalesPage() {
     navigate("/agency");
   };
 
-  const handleTierPurchaseComplete = (productSlug: string) => {
-    if (productSlug === "ceo-vault" || productSlug === "strategy-session") {
-      navigate("/book-session");
-    } else {
-      navigate("/thank-you");
-    }
+  const handleTierPurchaseComplete = (_productSlug: string) => {
+    navigate("/book-session");
   };
 
   // CMS content — use draft preview when ?preview=true

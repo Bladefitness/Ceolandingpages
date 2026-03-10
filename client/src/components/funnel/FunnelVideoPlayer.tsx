@@ -891,6 +891,7 @@ export function FunnelVideoPlayer({
             <MuxPlayer
               playbackId={parsed.videoId ?? ""}
               autoPlay="muted"
+              startTime={0}
               className="aspect-video w-full"
               onCanPlay={() => setPlayerReady(true)}
               muted={state === "playing-muted"}

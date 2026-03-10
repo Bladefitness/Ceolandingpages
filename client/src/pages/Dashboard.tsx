@@ -14,6 +14,7 @@ import { CategoryBreakdownChart } from "@/components/CategoryBreakdownChart";
 import { BenchmarkComparisonChart } from "@/components/BenchmarkComparisonChart";
 import { GapAnalysisVisual } from "@/components/GapAnalysisVisual";
 import { SkoolBanner } from "@/components/SkoolBanner";
+import { FunnelVideoPlayer } from "@/components/funnel/FunnelVideoPlayer";
 
 type PlaybookType = "titan" | "offer" | "facebook" | "instagram" | "leadgen";
 
@@ -40,6 +41,12 @@ export default function Dashboard() {
     },
     { enabled: !!roadmapId }
   );
+
+  // Fetch training video from sales page CMS
+  const { data: salesPageContent } = trpc.funnelAdmin.pages.getPublic.useQuery(
+    { slug: "sales-dual" },
+  );
+  const trainingVideoUrl = salesPageContent?.videoUrl ?? null;
 
   // Task toggle mutation
   const toggleTaskMutation = trpc.progress.toggleTask.useMutation({
@@ -465,6 +472,28 @@ export default function Dashboard() {
         <Card className="p-6 mb-8 bg-white">
           <GapAnalysisVisual {...gapAnalysisData} />
         </Card>
+
+        {/* Training Video Section */}
+        {trainingVideoUrl && (
+          <Card className="p-6 mb-8 bg-white">
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                Watch: Your Growth Strategy Explained
+              </h2>
+              <p className="text-gray-600 text-sm">
+                Learn exactly how to use your roadmap to scale your practice
+              </p>
+            </div>
+            <div className="mx-auto max-w-3xl">
+              <FunnelVideoPlayer
+                videoUrl={trainingVideoUrl}
+                overlayStyle="classy"
+                overlayColor="#2563eb"
+                title="Training Video"
+              />
+            </div>
+          </Card>
+        )}
 
         {/* Playbooks Section */}
         <Card className="p-6 bg-white">
