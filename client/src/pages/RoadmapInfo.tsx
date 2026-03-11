@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { SenjaTestimonials } from "@/components/funnel/SenjaTestimonials";
+import { PathSelector } from "@/components/funnel/PathSelector";
 import { trpc } from "@/lib/trpc";
 import { usePixelTracking } from "@/hooks/usePixelTracking";
 import { getSessionId } from "@/lib/funnelTracking";
@@ -21,6 +22,7 @@ const DEFAULTS = {
 };
 
 export default function RoadmapInfo() {
+  const [, navigate] = useLocation();
   const isPreview = new URLSearchParams(window.location.search).has("preview");
   const cmsPublicQuery = trpc.funnelAdmin.pages.getPublic.useQuery({ slug: "roadmap-info" }, { enabled: !isPreview });
   const cmsPreviewQuery = trpc.funnelAdmin.pages.getPreview.useQuery({ slug: "roadmap-info" }, { enabled: isPreview });
@@ -143,6 +145,14 @@ export default function RoadmapInfo() {
             Requested by 5,000+ health professionals
           </div>
         </div>
+      </section>
+
+      {/* ─── PATH SELECTOR (Agency / Courses) ─── */}
+      <section className="py-12 px-6" style={{ backgroundColor: '#F8FAFC' }}>
+        <PathSelector
+          onSelectCourses={() => navigate("/fb-ads-course?flow=dual")}
+          onSelectAgency={() => navigate("/agency")}
+        />
       </section>
 
       {/* ─── WHAT YOU'LL GET ─── */}
