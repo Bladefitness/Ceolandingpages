@@ -78,7 +78,8 @@ export const funnelRouter = router({
 
         // Create Whop checkout configuration
         // Use pre-created plan ID when available, fall back to inline plan creation
-        const checkoutConfig = product.whopPlanId
+        // In sandbox/test mode, always use inline plan (production plan IDs don't exist in sandbox)
+        const checkoutConfig = product.whopPlanId && !isTestMode
           ? await whop.checkoutConfigurations.create({
               plan_id: product.whopPlanId,
               metadata: {
