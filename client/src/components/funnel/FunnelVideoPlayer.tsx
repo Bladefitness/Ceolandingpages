@@ -783,6 +783,8 @@ export function FunnelVideoPlayer({
   const muxPlayerRef = useRef<any>(null);
   const muxSeekDone = useRef(false);
   const muxPlayStarted = useRef(false);
+  // Tracks whether smart autoplay sound-first attempt has been made
+  const soundFirstAttempted = useRef(false);
 
   // Programmatic play for Mux — more reliable than autoPlay attribute
   // autoPlay can resume from a cached position; this forces start from 0
@@ -808,11 +810,13 @@ export function FunnelVideoPlayer({
     switch (parsed.source) {
       case "mp4":
         if (videoRef.current) {
+          videoRef.current.currentTime = 0;
           videoRef.current.muted = false;
         }
         break;
       case "youtube":
         if (ytPlayerRef.current) {
+          ytPlayerRef.current.seekTo(0, true);
           ytPlayerRef.current.unMute();
           ytPlayerRef.current.setVolume(100);
         }
@@ -820,20 +824,38 @@ export function FunnelVideoPlayer({
       case "vimeo":
         if (vimeoIframeRef.current?.contentWindow) {
           vimeoIframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ method: "seekTo", value: 0 }),
+            "*",
+          );
+          vimeoIframeRef.current.contentWindow.postMessage(
             JSON.stringify({ method: "setVolume", value: 1 }),
             "*",
           );
         }
         break;
-      case "mux":
-        // MuxPlayer reacts to muted prop change via state
+      case "mux": {
+        // Seek underlying video to 0 then unmute via state
+        const muxEl = muxPlayerRef.current;
+        if (muxEl) {
+          const video =
+            muxEl.media?.nativeEl ??
+            muxEl.shadowRoot?.querySelector("video") ??
+            null;
+          if (video) {
+            video.currentTime = 0;
+          }
+        }
         break;
+      }
     }
 
     setState("playing-unmuted");
   }, [state, parsed.source]);
 
   const handlePlayFromIdle = useCallback(() => {
+    // Reset Mux play guard so the ref callback fires fresh for the new mount
+    muxPlayStarted.current = false;
+    soundFirstAttempted.current = false;
     setState("playing-unmuted");
   }, []);
 
@@ -843,7 +865,29 @@ export function FunnelVideoPlayer({
 
   const handleMp4CanPlay = useCallback(() => {
     setPlayerReady(true);
-  }, []);
+    // Smart autoplay: try sound first, fall back to muted
+    if (
+      autoplayMode === "smart" &&
+      !soundFirstAttempted.current &&
+      videoRef.current &&
+      state === "playing-muted"
+    ) {
+      soundFirstAttempted.current = true;
+      const video = videoRef.current;
+      video.muted = false;
+      const p = video.play();
+      if (p) {
+        p.then(() => {
+          // Sound worked — go straight to unmuted
+          setState("playing-unmuted");
+        }).catch(() => {
+          // Blocked — fall back to muted play
+          video.muted = true;
+          video.play().catch(() => {});
+        });
+      }
+    }
+  }, [autoplayMode, state]);
 
   // For Vimeo, set ready immediately since we can't easily detect
   useEffect(() => {
@@ -937,12 +981,29 @@ export function FunnelVideoPlayer({
                     if (video) {
                       video.currentTime = 0;
                       muxPlayStarted.current = true;
-                      // If click-to-play (unmuted), unmute the underlying video
                       if (state === "playing-unmuted") {
+                        // Click-to-play: play unmuted directly
                         video.muted = false;
+                        const p = video.play?.();
+                        if (p?.catch) p.catch(() => {});
+                      } else if (autoplayMode === "smart" && !soundFirstAttempted.current) {
+                        // Smart autoplay: try sound first
+                        soundFirstAttempted.current = true;
+                        video.muted = false;
+                        const p = video.play?.();
+                        if (p) {
+                          p.then(() => {
+                            setState("playing-unmuted");
+                          }).catch(() => {
+                            video.muted = true;
+                            video.play?.().catch(() => {});
+                          });
+                        }
+                      } else {
+                        // Normal muted autoplay
+                        const p = video.play?.();
+                        if (p?.catch) p.catch(() => {});
                       }
-                      const p = video.play?.();
-                      if (p?.catch) p.catch(() => {});
                     }
                   };
                   if (el.media?.nativeEl || el.shadowRoot?.querySelector("video")) {
