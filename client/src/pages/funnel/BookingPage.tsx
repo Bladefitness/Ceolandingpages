@@ -31,6 +31,31 @@ export default function BookingPage() {
   const { fireEvent } = usePixelTracking("book-session");
   const trackEvent = trpc.funnelAdmin.events.track.useMutation();
 
+  // Determine purchase value from purchased products
+  const purchaseValue = purchasedProducts.includes("ceo-vault")
+    ? 997
+    : purchasedProducts.includes("strategy-session")
+      ? 297
+      : purchasedProducts.includes("fb-ads-course")
+        ? 197
+        : 0;
+
+  const purchaseItemName = purchasedProducts.includes("ceo-vault")
+    ? "CEO Vault — All Courses"
+    : purchasedProducts.includes("strategy-session")
+      ? "Course + 1-on-1 Session"
+      : purchasedProducts.includes("fb-ads-course")
+        ? "FB Ads Course"
+        : "Unknown";
+
+  const purchaseItemId = purchasedProducts.includes("ceo-vault")
+    ? "ceo-vault"
+    : purchasedProducts.includes("strategy-session")
+      ? "strategy-session"
+      : purchasedProducts.includes("fb-ads-course")
+        ? "fb-ads-course"
+        : "unknown";
+
   useEffect(() => {
     if (sessionId) {
       trackEvent.mutate({
@@ -40,6 +65,23 @@ export default function BookingPage() {
         orderId: orderId ?? undefined,
       });
       fireEvent("page_view");
+
+      // Fire purchase event for GTM (tag triggers on URL containing "book-session")
+      const purchaseData = {
+        transaction_id: orderId ? String(orderId) : `session-${sessionId}`,
+        value: purchaseValue,
+        currency: "USD",
+        item_id: purchaseItemId,
+        item_name: purchaseItemName,
+        items: [{ item_id: purchaseItemId, item_name: purchaseItemName, price: purchaseValue, quantity: 1 }],
+      };
+
+      fireEvent("purchase", purchaseData);
+
+      // Direct dataLayer push as fallback — ensures GTM gets the event
+      // even if pixel config hasn't loaded yet
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: "purchase", ...purchaseData });
     }
   }, [sessionId]);
 

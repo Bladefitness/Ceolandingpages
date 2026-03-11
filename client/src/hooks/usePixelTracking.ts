@@ -30,7 +30,15 @@ const DEFAULT_EVENT_MAPPINGS: Record<string, Record<string, string>> = {
     downsell_view: "ViewContent",
     downsell_accept: "CompletePayment",
   },
-  google_tag_manager: {},
+  google_tag_manager: {
+    page_view: "page_view",
+    checkout_start: "begin_checkout",
+    purchase: "purchase",
+    upsell_view: "view_item",
+    upsell_accept: "purchase",
+    downsell_view: "view_item",
+    downsell_accept: "purchase",
+  },
   hyros: {
     page_view: "PageView",
     checkout_start: "InitiateCheckout",
