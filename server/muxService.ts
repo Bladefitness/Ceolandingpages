@@ -269,6 +269,7 @@ export async function generateCaptionsForAsset(muxAssetId: string) {
       language_code: "en",
       name: "English CC",
       closed_captions: true,
+      text_source: "generated_vod",
     } as any);
   } catch (err) {
     throw new Error(`Failed to generate captions for ${muxAssetId}: ${err instanceof Error ? err.message : String(err)}`);
