@@ -115,16 +115,18 @@ export default function BookingPage() {
             </div>
 
             {/* After booking, link to call prep */}
-            <div className="mb-8 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center">
-              <p className="mb-2 text-sm font-medium text-blue-800">
+            <div className="mb-8 rounded-2xl border border-amber-400 bg-amber-50 p-5 text-center shadow-md"
+              style={{ boxShadow: "0 0 20px rgba(245,158,11,0.15)" }}
+            >
+              <p className="mb-2 text-sm font-bold text-amber-800">
                 Already booked?
               </p>
               <a
                 href="/call-prep"
-                className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow transition hover:shadow-md"
+                className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl hover:scale-[1.02]"
                 style={{
                   background:
-                    "linear-gradient(135deg, var(--titan-blue) 0%, var(--titan-blue-hover) 100%)",
+                    "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
                 }}
               >
                 Go to Call Prep Page →
