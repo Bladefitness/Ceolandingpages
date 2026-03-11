@@ -315,9 +315,9 @@ export default function MasterclassOptIn() {
         <div className="overflow-hidden rounded-2xl border border-[var(--titan-border)] bg-white shadow-sm">
           <div className="grid grid-cols-1 lg:grid-cols-5">
             {/* Left: Large Photo */}
-            <div className="lg:col-span-2 relative min-h-[320px] lg:min-h-[480px]">
+            <div className="lg:col-span-2 relative min-h-[320px] lg:min-h-[480px]" style={{ background: "linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #ede9fe 100%)" }}>
               <img
-                src="/dr-emeka-headshot.jpg"
+                src="/dr-emeka-headshot.png"
                 alt="Dr. Emeka Ajufo"
                 className="absolute inset-0 h-full w-full object-cover object-top"
               />
