@@ -319,8 +319,8 @@ export default function MasterclassOptIn() {
               <img
                 src="/dr-emeka-headshot.jpg"
                 alt="Dr. Emeka Ajufo"
-                className="w-full object-cover"
-                style={{ height: "160%", objectPosition: "center 25%" }}
+                className="w-full"
+                style={{ height: "220%", objectFit: "cover", objectPosition: "center 30%", transform: "scale(1.3)" }}
               />
             </div>
             <h3
