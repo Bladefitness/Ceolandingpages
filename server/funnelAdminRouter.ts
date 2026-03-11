@@ -18,7 +18,7 @@ import {
   videoEvents,
   siteSettings,
 } from "../drizzle/schema";
-import { createDirectUpload, getAssetStatus, listAssets, deleteAsset, syncPreparingAssets } from "./muxService";
+import { createDirectUpload, getAssetStatus, listAssets, deleteAsset, syncPreparingAssets, getCaptions } from "./muxService";
 
 // ── Variant assignment helpers ────────────────────────────────────────────────
 
@@ -853,6 +853,13 @@ export const funnelAdminRouter = router({
         }
         await db.update(muxAssets).set(updateSet).where(eq(muxAssets.id, input.id));
         return { success: true };
+      }),
+
+    getCaptions: adminProcedure
+      .input(z.object({ muxAssetId: z.string() }))
+      .query(async ({ input }) => {
+        const captions = await getCaptions(input.muxAssetId);
+        return { captions };
       }),
   }),
 

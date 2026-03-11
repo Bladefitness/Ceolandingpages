@@ -252,6 +252,7 @@ export const muxAssets = mysqlTable("muxAssets", {
   muxAssetId: varchar("muxAssetId", { length: 255 }).notNull().unique(),
   playbackId: varchar("playbackId", { length: 255 }),
   status: mysqlEnum("muxAssetStatus", ["preparing", "ready", "errored"]).default("preparing").notNull(),
+  captionStatus: mysqlEnum("captionStatus", ["generating", "ready", "none"]),
   duration: int("duration"),
   filename: varchar("filename", { length: 500 }),
   title: varchar("title", { length: 255 }),

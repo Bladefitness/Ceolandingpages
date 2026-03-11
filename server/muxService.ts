@@ -17,10 +17,13 @@ export async function createDirectUpload(filename: string) {
   let upload;
   try {
     upload = await mux.video.uploads.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       new_asset_settings: {
         playback_policy: ["public"],
         encoding_tier: "baseline",
-      },
+        // generated_subtitles is supported by the Mux API but absent from older SDK types
+        generated_subtitles: [{ name: "English CC", language_code: "en" }],
+      } as any,
       cors_origin: "*",
     });
   } catch (err) {
@@ -42,6 +45,15 @@ export async function createDirectUpload(filename: string) {
     uploadId: upload.id,
     assetId: null,
   };
+}
+
+function deriveCaptionStatus(
+  asset: Awaited<ReturnType<ReturnType<typeof getMuxClient>["video"]["assets"]["retrieve"]>>,
+): "generating" | "ready" | "none" {
+  const tracks = (asset as { tracks?: Array<{ type?: string; status?: string }> }).tracks ?? [];
+  const textTrack = tracks.find((t) => t.type === "text");
+  if (!textTrack) return "none";
+  return textTrack.status === "ready" ? "ready" : "generating";
 }
 
 export async function getAssetStatus(uploadId: string) {
@@ -78,6 +90,7 @@ export async function getAssetStatus(uploadId: string) {
         muxAssetId: upload.asset_id,
         playbackId: asset.playback_ids?.[0]?.id ?? null,
         status: mappedStatus,
+        captionStatus: deriveCaptionStatus(asset),
         duration: Math.round(asset.duration ?? 0),
       })
       .where(eq(muxAssets.uploadId, uploadId));
@@ -135,6 +148,7 @@ export async function syncPreparingAssets() {
           muxAssetId: upload.asset_id,
           playbackId: asset.playback_ids?.[0]?.id ?? null,
           status: mappedStatus,
+          captionStatus: deriveCaptionStatus(asset),
           duration: Math.round(asset.duration ?? 0),
         })
         .where(eq(muxAssets.uploadId, row.uploadId));
@@ -146,6 +160,67 @@ export async function syncPreparingAssets() {
   }
 
   return { synced };
+}
+
+export type CaptionLine = { startTime: string; endTime: string; text: string };
+
+function parseVtt(vttText: string): CaptionLine[] {
+  const lines = vttText.split("\n");
+  const result: CaptionLine[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    // Match timestamp lines like "00:00:01.000 --> 00:00:04.000"
+    const tsMatch = line.match(/^(\d{2}:\d{2}:\d{2}[.,]\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}[.,]\d{3})/);
+    if (tsMatch) {
+      const startTime = tsMatch[1].replace(",", ".");
+      const endTime = tsMatch[2].replace(",", ".");
+      const textLines: string[] = [];
+      i++;
+      while (i < lines.length && lines[i].trim() !== "") {
+        const t = lines[i].trim();
+        if (t) textLines.push(t);
+        i++;
+      }
+      const text = textLines.join(" ");
+      if (text) result.push({ startTime, endTime, text });
+    } else {
+      i++;
+    }
+  }
+
+  return result;
+}
+
+export async function getCaptions(muxAssetId: string): Promise<CaptionLine[] | null> {
+  const mux = getMuxClient();
+
+  let asset;
+  try {
+    asset = await mux.video.assets.retrieve(muxAssetId);
+  } catch (err) {
+    throw new Error(`Failed to retrieve asset ${muxAssetId}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  const playbackId = asset.playback_ids?.[0]?.id;
+  if (!playbackId) return null;
+
+  const tracks = (asset as { tracks?: Array<{ id?: string; type?: string; status?: string }> }).tracks ?? [];
+  const textTrack = tracks.find((t) => t.type === "text" && t.status === "ready");
+  if (!textTrack?.id) return null;
+
+  const vttUrl = `https://stream.mux.com/${playbackId}/text/${textTrack.id}.vtt`;
+  let vttText: string;
+  try {
+    const res = await fetch(vttUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    vttText = await res.text();
+  } catch (err) {
+    throw new Error(`Failed to fetch VTT from Mux: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  return parseVtt(vttText);
 }
 
 export async function deleteAsset(muxAssetId: string) {

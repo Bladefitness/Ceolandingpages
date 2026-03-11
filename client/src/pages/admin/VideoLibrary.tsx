@@ -14,6 +14,9 @@ import {
   Search,
   Code,
   ExternalLink,
+  Subtitles,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 function formatDuration(seconds: number | null): string {
@@ -31,11 +34,213 @@ function formatDate(date: string | Date): string {
   });
 }
 
+// Converts "00:00:04.320" → "0:04"
+function shortTime(ts: string): string {
+  const parts = ts.split(":");
+  if (parts.length < 3) return ts;
+  const mins = parseInt(parts[1], 10);
+  const secs = Math.floor(parseFloat(parts[2]));
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
 const STATUS_BADGE: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   ready: { label: "Ready", color: "text-emerald-400 bg-emerald-900/30 border-emerald-700/50", icon: <CheckCircle className="w-3 h-3" /> },
   preparing: { label: "Processing", color: "text-yellow-400 bg-yellow-900/30 border-yellow-700/50", icon: <Loader2 className="w-3 h-3 animate-spin" /> },
   errored: { label: "Error", color: "text-red-400 bg-red-900/30 border-red-700/50", icon: <AlertCircle className="w-3 h-3" /> },
 };
+
+const CAPTION_BADGE: Record<string, { label: string; color: string }> = {
+  ready: { label: "CC Ready", color: "text-blue-400 bg-blue-900/30 border-blue-700/50" },
+  generating: { label: "CC Generating", color: "text-yellow-400 bg-yellow-900/30 border-yellow-700/50" },
+  none: { label: "No CC", color: "text-slate-500 bg-slate-800/30 border-slate-700/50" },
+};
+
+type AssetRow = {
+  id: number;
+  muxAssetId: string;
+  playbackId: string | null;
+  status: "preparing" | "ready" | "errored";
+  captionStatus?: "generating" | "ready" | "none" | null;
+  duration: number | null;
+  filename: string | null;
+  title: string | null;
+  createdAt: Date | string;
+};
+
+function TranscriptPanel({ muxAssetId }: { muxAssetId: string }) {
+  const captionsQuery = trpc.funnelAdmin.mux.getCaptions.useQuery(
+    { muxAssetId },
+    { retry: false },
+  );
+
+  if (captionsQuery.isLoading) {
+    return (
+      <div className="flex items-center justify-center py-6 text-slate-400 text-sm gap-2">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Loading transcript...
+      </div>
+    );
+  }
+
+  if (captionsQuery.isError) {
+    return (
+      <p className="py-4 text-center text-red-400 text-sm">
+        Failed to load transcript
+      </p>
+    );
+  }
+
+  const captions = captionsQuery.data?.captions ?? [];
+
+  if (captions.length === 0) {
+    return (
+      <p className="py-4 text-center text-slate-500 text-sm">
+        No captions available yet. They may still be generating.
+      </p>
+    );
+  }
+
+  return (
+    <div className="max-h-64 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      {captions.map((line, idx) => (
+        <div key={idx} className="flex gap-3 text-sm group hover:bg-slate-700/30 rounded px-1 py-0.5">
+          <span className="shrink-0 text-blue-400 font-mono text-xs pt-0.5 w-10">
+            {shortTime(line.startTime)}
+          </span>
+          <span className="text-slate-300 leading-snug">{line.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function VideoCard({
+  asset,
+  onCopyToClipboard,
+  onDelete,
+  deleteIsPending,
+}: {
+  asset: AssetRow;
+  onCopyToClipboard: (text: string, label: string) => void;
+  onDelete: (muxAssetId: string) => void;
+  deleteIsPending: boolean;
+}) {
+  const [showTranscript, setShowTranscript] = useState(false);
+  const badge = STATUS_BADGE[asset.status] ?? STATUS_BADGE.preparing;
+  const captionBadge = asset.captionStatus ? CAPTION_BADGE[asset.captionStatus] : null;
+  const canShowTranscript = asset.status === "ready" && asset.captionStatus === "ready" && !!asset.muxAssetId;
+
+  return (
+    <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+      {/* Thumbnail */}
+      <div className="aspect-video bg-slate-900 relative">
+        {asset.playbackId ? (
+          <img
+            src={`https://image.mux.com/${asset.playbackId}/thumbnail.webp?time=2`}
+            alt={asset.title ?? asset.filename ?? "Video"}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Film className="w-10 h-10 text-slate-600" />
+          </div>
+        )}
+        {asset.duration && (
+          <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+            {formatDuration(asset.duration)}
+          </span>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="p-4 space-y-3 flex-1 flex flex-col">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-white text-sm font-medium truncate">
+              {asset.title ?? asset.filename ?? "Untitled"}
+            </p>
+            <p className="text-slate-500 text-xs mt-0.5">{formatDate(asset.createdAt)}</p>
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${badge.color}`}>
+              {badge.icon}
+              {badge.label}
+            </span>
+            {captionBadge && (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${captionBadge.color}`}>
+                <Subtitles className="w-3 h-3" />
+                {captionBadge.label}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        {asset.playbackId && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => onCopyToClipboard(asset.playbackId!, "Playback ID")}
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 px-2 py-1 rounded transition-colors"
+            >
+              <Copy className="w-3 h-3" />
+              Copy ID
+            </button>
+            <button
+              onClick={() =>
+                onCopyToClipboard(
+                  `<mux-player playback-id="${asset.playbackId}" autoplay="muted"></mux-player>`,
+                  "Embed code",
+                )
+              }
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 px-2 py-1 rounded transition-colors"
+            >
+              <Code className="w-3 h-3" />
+              Embed
+            </button>
+            <a
+              href={`/v/${asset.playbackId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 px-2 py-1 rounded transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Preview
+            </a>
+            {canShowTranscript && (
+              <button
+                onClick={() => setShowTranscript((v) => !v)}
+                className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 bg-blue-900/20 hover:bg-blue-900/40 px-2 py-1 rounded transition-colors"
+              >
+                <Subtitles className="w-3 h-3" />
+                Transcript
+                {showTranscript ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+            )}
+            <button
+              onClick={() => onDelete(asset.muxAssetId)}
+              disabled={deleteIsPending}
+              className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/40 px-2 py-1 rounded transition-colors ml-auto"
+            >
+              <Trash2 className="w-3 h-3" />
+              Delete
+            </button>
+          </div>
+        )}
+
+        {/* Transcript Panel */}
+        {showTranscript && canShowTranscript && (
+          <div className="border-t border-slate-700 pt-3 mt-1">
+            <p className="text-slate-400 text-xs font-medium mb-2 flex items-center gap-1">
+              <Subtitles className="w-3 h-3" />
+              Transcript
+            </p>
+            <TranscriptPanel muxAssetId={asset.muxAssetId} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function VideoLibrary() {
   const [search, setSearch] = useState("");
@@ -69,7 +274,7 @@ export default function VideoLibrary() {
 
   const statsQuery = trpc.funnelAdmin.analytics.videoEngagement.useQuery({});
 
-  const assets = assetsQuery.data ?? [];
+  const assets = (assetsQuery.data ?? []) as AssetRow[];
   const filtered = search
     ? assets.filter((a) =>
         (a.title ?? a.filename ?? "").toLowerCase().includes(search.toLowerCase()),
@@ -154,98 +359,15 @@ export default function VideoLibrary() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((asset) => {
-              const badge = STATUS_BADGE[asset.status] ?? STATUS_BADGE.preparing;
-              return (
-                <div
-                  key={asset.id}
-                  className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden"
-                >
-                  {/* Thumbnail */}
-                  <div className="aspect-video bg-slate-900 relative">
-                    {asset.playbackId ? (
-                      <img
-                        src={`https://image.mux.com/${asset.playbackId}/thumbnail.webp?time=2`}
-                        alt={asset.title ?? asset.filename ?? "Video"}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Film className="w-10 h-10 text-slate-600" />
-                      </div>
-                    )}
-                    {/* Duration badge */}
-                    {asset.duration && (
-                      <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
-                        {formatDuration(asset.duration)}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-white text-sm font-medium truncate">
-                          {asset.title ?? asset.filename ?? "Untitled"}
-                        </p>
-                        <p className="text-slate-500 text-xs mt-0.5">
-                          {formatDate(asset.createdAt)}
-                        </p>
-                      </div>
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${badge.color}`}
-                      >
-                        {badge.icon}
-                        {badge.label}
-                      </span>
-                    </div>
-
-                    {/* Actions */}
-                    {asset.playbackId && (
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => copyToClipboard(asset.playbackId!, "Playback ID")}
-                          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 px-2 py-1 rounded transition-colors"
-                        >
-                          <Copy className="w-3 h-3" />
-                          Copy ID
-                        </button>
-                        <button
-                          onClick={() =>
-                            copyToClipboard(
-                              `<mux-player playback-id="${asset.playbackId}" autoplay="muted"></mux-player>`,
-                              "Embed code",
-                            )
-                          }
-                          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 px-2 py-1 rounded transition-colors"
-                        >
-                          <Code className="w-3 h-3" />
-                          Embed
-                        </button>
-                        <a
-                          href={`/v/${asset.playbackId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 px-2 py-1 rounded transition-colors"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          Preview
-                        </a>
-                        <button
-                          onClick={() => handleDelete(asset.muxAssetId)}
-                          disabled={deleteMutation.isPending}
-                          className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/40 px-2 py-1 rounded transition-colors ml-auto"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {filtered.map((asset) => (
+              <VideoCard
+                key={asset.id}
+                asset={asset}
+                onCopyToClipboard={copyToClipboard}
+                onDelete={handleDelete}
+                deleteIsPending={deleteMutation.isPending}
+              />
+            ))}
           </div>
         )}
       </div>
