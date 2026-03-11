@@ -158,6 +158,7 @@ export default function UpsellPage() {
             videoUrl={content.videoUrl}
             thumbnailUrl={content.heroImageUrl}
             overlayStyle={content.videoOverlayStyle as any}
+            autoplayMode={(content as any).videoAutoplayMode === "click-to-play" ? "click-to-play" : "smart"}
             title="Upsell Video"
           />
         </div>

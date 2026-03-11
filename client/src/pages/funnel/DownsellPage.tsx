@@ -133,6 +133,7 @@ export default function DownsellPage() {
             videoUrl={content.videoUrl}
             thumbnailUrl={content.heroImageUrl}
             overlayStyle={content.videoOverlayStyle as any}
+            autoplayMode={(content as any).videoAutoplayMode === "click-to-play" ? "click-to-play" : "smart"}
             title="Downsell Video"
           />
         </div>

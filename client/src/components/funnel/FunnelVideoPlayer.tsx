@@ -15,6 +15,11 @@ interface FunnelVideoPlayerProps {
   previewUrl?: string | null;
   overlayStyle?: OverlayStyle;
   overlayColor?: string;
+  /** Controls autoplay behavior:
+   * - "smart" (default): autoplay muted with unmute overlay
+   * - "click-to-play": show thumbnail/preview, user clicks to play with sound
+   */
+  autoplayMode?: "smart" | "click-to-play";
   title?: string;
   className?: string;
   onWatchProgress?: (seconds: number, percent: number) => void;
@@ -724,16 +729,17 @@ interface Mp4PlayerProps {
   onSeeked?: (e: React.SyntheticEvent<HTMLVideoElement>) => void;
   onPause?: () => void;
   onEnded?: () => void;
+  startMuted?: boolean;
 }
 
-function Mp4Player({ src, videoRef, onCanPlay, onTimeUpdate, onSeeking, onSeeked, onPause, onEnded }: Mp4PlayerProps) {
+function Mp4Player({ src, videoRef, onCanPlay, onTimeUpdate, onSeeking, onSeeked, onPause, onEnded, startMuted }: Mp4PlayerProps) {
   return (
     <video
       ref={videoRef}
       src={src}
       className="aspect-video w-full"
       autoPlay
-      muted
+      muted={startMuted}
       playsInline
       onCanPlay={onCanPlay}
       onTimeUpdate={onTimeUpdate}
@@ -753,6 +759,7 @@ export function FunnelVideoPlayer({
   previewUrl,
   overlayStyle = "front-and-center",
   overlayColor = "#3974FF",
+  autoplayMode = "smart",
   title = "Video",
   className = "",
   onWatchProgress,
@@ -761,11 +768,12 @@ export function FunnelVideoPlayer({
   heatmapSessionId,
 }: FunnelVideoPlayerProps) {
   const parsed = parseVideoUrl(videoUrl);
-  const smartAutoplay = canSmartAutoplay(parsed.source);
+  const smartAutoplay = autoplayMode === "smart" && canSmartAutoplay(parsed.source);
 
-  // If a preview clip is provided, start in "preview" mode instead of autoplay
+  // If click-to-play mode or a preview clip is provided, start in "idle"
   const hasPreview = !!previewUrl;
-  const [state, setState] = useState<PlayerState>(hasPreview ? "idle" : (smartAutoplay ? "playing-muted" : "idle"));
+  const forceIdle = autoplayMode === "click-to-play" || hasPreview;
+  const [state, setState] = useState<PlayerState>(forceIdle ? "idle" : (smartAutoplay ? "playing-muted" : "idle"));
   const [playerReady, setPlayerReady] = useState(false);
 
   // Refs for different player types
@@ -898,6 +906,7 @@ export function FunnelVideoPlayer({
             <Mp4Player
               src={parsed.embedUrl}
               videoRef={videoRef}
+              startMuted={state === "playing-muted"}
               onCanPlay={() => {
                 handleMp4CanPlay();
                 if (enableHeatmap && videoRef.current) {
@@ -923,17 +932,19 @@ export function FunnelVideoPlayer({
               ref={(el: any) => {
                 muxPlayerRef.current = el;
                 if (el && !muxPlayStarted.current) {
-                  // Access the underlying <video> element inside the Mux web component
                   const forceStartFromZero = () => {
                     const video = el.media?.nativeEl ?? el.shadowRoot?.querySelector("video") ?? el;
                     if (video) {
                       video.currentTime = 0;
                       muxPlayStarted.current = true;
+                      // If click-to-play (unmuted), unmute the underlying video
+                      if (state === "playing-unmuted") {
+                        video.muted = false;
+                      }
                       const p = video.play?.();
                       if (p?.catch) p.catch(() => {});
                     }
                   };
-                  // Wait for the underlying video to be ready
                   if (el.media?.nativeEl || el.shadowRoot?.querySelector("video")) {
                     setTimeout(forceStartFromZero, 150);
                   } else {
@@ -944,8 +955,8 @@ export function FunnelVideoPlayer({
                 }
               }}
               playbackId={parsed.videoId ?? ""}
-              autoPlay="muted"
-              muted
+              autoPlay={state === "playing-unmuted" ? undefined : "muted"}
+              muted={state !== "playing-unmuted"}
               playsInline
               startTime={0}
               disableCookies

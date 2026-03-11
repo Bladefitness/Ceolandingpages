@@ -244,6 +244,7 @@ export default function SalesPage() {
               thumbnailUrl={content.heroImageUrl}
               previewUrl={content.previewUrl}
               overlayStyle={content.videoOverlayStyle as any}
+              autoplayMode={(content as any).videoAutoplayMode === "click-to-play" ? "click-to-play" : "smart"}
               title="Sales Video"
               onWatchProgress={handleWatchProgress}
               heatmapVideoId={content.videoUrl}

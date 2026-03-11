@@ -19,7 +19,7 @@ export async function createDirectUpload(filename: string) {
     upload = await mux.video.uploads.create({
       new_asset_settings: {
         playback_policy: ["public"],
-        encoding_tier: "smart",
+        encoding_tier: "baseline",
       },
       cors_origin: "*",
     });
@@ -99,6 +99,53 @@ export async function listAssets() {
     .select()
     .from(muxAssets)
     .orderBy(desc(muxAssets.createdAt));
+}
+
+export async function syncPreparingAssets() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const preparing = await db
+    .select()
+    .from(muxAssets)
+    .where(eq(muxAssets.status, "preparing"));
+
+  if (preparing.length === 0) return { synced: 0 };
+
+  const mux = getMuxClient();
+  let synced = 0;
+
+  for (const row of preparing) {
+    if (!row.uploadId) continue;
+    try {
+      const upload = await mux.video.uploads.retrieve(row.uploadId);
+      if (!upload.asset_id) continue;
+
+      const asset = await mux.video.assets.retrieve(upload.asset_id);
+      const mappedStatus: "preparing" | "ready" | "errored" =
+        asset.status === "ready"
+          ? "ready"
+          : asset.status === "errored"
+          ? "errored"
+          : "preparing";
+
+      await db
+        .update(muxAssets)
+        .set({
+          muxAssetId: upload.asset_id,
+          playbackId: asset.playback_ids?.[0]?.id ?? null,
+          status: mappedStatus,
+          duration: Math.round(asset.duration ?? 0),
+        })
+        .where(eq(muxAssets.uploadId, row.uploadId));
+
+      if (mappedStatus !== "preparing") synced++;
+    } catch (err) {
+      console.error(`Failed to sync asset ${row.uploadId}:`, err instanceof Error ? err.message : err);
+    }
+  }
+
+  return { synced };
 }
 
 export async function deleteAsset(muxAssetId: string) {

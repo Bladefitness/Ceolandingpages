@@ -66,6 +66,7 @@ export default function CallPrepPage() {
               videoUrl={cmsContent.videoUrl}
               thumbnailUrl={cmsContent.heroImageUrl}
               overlayStyle={(cmsContent.videoOverlayStyle as any) ?? "front-and-center"}
+              autoplayMode={(cmsContent as any).videoAutoplayMode === "click-to-play" ? "click-to-play" : "smart"}
               title="Call Prep Video"
             />
           ) : (

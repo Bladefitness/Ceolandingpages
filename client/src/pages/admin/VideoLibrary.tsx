@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { MuxVideoUploader } from "@/components/admin/MuxVideoUploader";
@@ -42,6 +42,23 @@ export default function VideoLibrary() {
   const utils = trpc.useUtils();
 
   const assetsQuery = trpc.funnelAdmin.mux.list.useQuery();
+
+  const hasPreparing = (assetsQuery.data ?? []).some((a) => a.status === "preparing");
+
+  const syncMutation = trpc.funnelAdmin.mux.syncPreparing.useMutation({
+    onSuccess: (data) => {
+      if (data.synced > 0) utils.funnelAdmin.mux.list.invalidate();
+    },
+  });
+
+  // Auto-sync preparing assets every 5 seconds
+  useEffect(() => {
+    if (!hasPreparing) return;
+    syncMutation.mutate();
+    const interval = setInterval(() => syncMutation.mutate(), 5000);
+    return () => clearInterval(interval);
+  }, [hasPreparing]);
+
   const deleteMutation = trpc.funnelAdmin.mux.delete.useMutation({
     onSuccess: () => {
       utils.funnelAdmin.mux.list.invalidate();

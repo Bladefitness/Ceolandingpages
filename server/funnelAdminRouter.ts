@@ -18,7 +18,7 @@ import {
   videoEvents,
   siteSettings,
 } from "../drizzle/schema";
-import { createDirectUpload, getAssetStatus, listAssets, deleteAsset } from "./muxService";
+import { createDirectUpload, getAssetStatus, listAssets, deleteAsset, syncPreparingAssets } from "./muxService";
 
 // ── Variant assignment helpers ────────────────────────────────────────────────
 
@@ -206,6 +206,7 @@ export const funnelAdminRouter = router({
           heroImageUrl: z.string().optional(),
           videoUrl: z.string().optional(),
           videoOverlayStyle: z.string().optional(),
+          videoAutoplayMode: z.string().optional(),
           previewUrl: z.string().optional(),
           senjaWidgetId: z.string().optional(),
           headerTrackingCode: z.string().optional(),
@@ -276,7 +277,7 @@ export const funnelAdminRouter = router({
         const allowedFields = [
           "headline", "subheadline", "bodyText", "ctaText", "declineText",
           "originalPrice", "salePrice", "valueStackItems", "faqItems",
-          "heroImageUrl", "videoUrl", "videoOverlayStyle", "previewUrl", "senjaWidgetId",
+          "heroImageUrl", "videoUrl", "videoOverlayStyle", "videoAutoplayMode", "previewUrl", "senjaWidgetId",
           "headerTrackingCode", "bodyTrackingCode", "isActive",
         ];
         for (const field of allowedFields) {
@@ -824,6 +825,10 @@ export const funnelAdminRouter = router({
 
     list: adminProcedure.query(async () => {
       return listAssets();
+    }),
+
+    syncPreparing: adminProcedure.mutation(async () => {
+      return syncPreparingAssets();
     }),
 
     delete: adminProcedure
