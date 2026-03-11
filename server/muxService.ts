@@ -162,6 +162,42 @@ export async function syncPreparingAssets() {
   return { synced };
 }
 
+export async function syncCaptionStatuses() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const assets = await db
+    .select()
+    .from(muxAssets)
+    .where(eq(muxAssets.status, "ready"));
+
+  const needsSync = assets.filter(
+    (a) => !a.captionStatus || a.captionStatus === "generating",
+  );
+  if (needsSync.length === 0) return { synced: 0 };
+
+  const mux = getMuxClient();
+  let synced = 0;
+
+  for (const row of needsSync) {
+    try {
+      const asset = await mux.video.assets.retrieve(row.muxAssetId);
+      const newStatus = deriveCaptionStatus(asset);
+      if (newStatus !== row.captionStatus) {
+        await db
+          .update(muxAssets)
+          .set({ captionStatus: newStatus })
+          .where(eq(muxAssets.muxAssetId, row.muxAssetId));
+        synced++;
+      }
+    } catch (err) {
+      console.error(`Failed to sync caption status for ${row.muxAssetId}:`, err instanceof Error ? err.message : err);
+    }
+  }
+
+  return { synced };
+}
+
 export type CaptionLine = { startTime: string; endTime: string; text: string };
 
 function parseVtt(vttText: string): CaptionLine[] {
@@ -221,6 +257,32 @@ export async function getCaptions(muxAssetId: string): Promise<CaptionLine[] | n
   }
 
   return parseVtt(vttText);
+}
+
+export async function generateCaptionsForAsset(muxAssetId: string) {
+  const mux = getMuxClient();
+
+  try {
+    await (mux.video.assets as any).createTrack(muxAssetId, {
+      type: "text",
+      text_type: "subtitles",
+      language_code: "en",
+      name: "English CC",
+      closed_captions: true,
+    } as any);
+  } catch (err) {
+    throw new Error(`Failed to generate captions for ${muxAssetId}: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(muxAssets)
+    .set({ captionStatus: "generating" })
+    .where(eq(muxAssets.muxAssetId, muxAssetId));
+
+  return { success: true };
 }
 
 export async function deleteAsset(muxAssetId: string) {

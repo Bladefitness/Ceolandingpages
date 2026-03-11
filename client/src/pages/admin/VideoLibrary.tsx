@@ -119,16 +119,21 @@ function VideoCard({
   onCopyToClipboard,
   onDelete,
   deleteIsPending,
+  onGenerateCaptions,
+  generateCaptionsIsPending,
 }: {
   asset: AssetRow;
   onCopyToClipboard: (text: string, label: string) => void;
   onDelete: (muxAssetId: string) => void;
   deleteIsPending: boolean;
+  onGenerateCaptions: (muxAssetId: string) => void;
+  generateCaptionsIsPending: boolean;
 }) {
   const [showTranscript, setShowTranscript] = useState(false);
   const badge = STATUS_BADGE[asset.status] ?? STATUS_BADGE.preparing;
   const captionBadge = asset.captionStatus ? CAPTION_BADGE[asset.captionStatus] : null;
   const canShowTranscript = asset.status === "ready" && asset.captionStatus === "ready" && !!asset.muxAssetId;
+  const canGenerateCaptions = asset.status === "ready" && (!asset.captionStatus || asset.captionStatus === "none") && !!asset.muxAssetId;
 
   return (
     <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden flex flex-col">
@@ -216,6 +221,16 @@ function VideoCard({
                 {showTranscript ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               </button>
             )}
+            {canGenerateCaptions && (
+              <button
+                onClick={() => onGenerateCaptions(asset.muxAssetId)}
+                disabled={generateCaptionsIsPending}
+                className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 bg-purple-900/20 hover:bg-purple-900/40 px-2 py-1 rounded transition-colors"
+              >
+                {generateCaptionsIsPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Subtitles className="w-3 h-3" />}
+                Generate Captions
+              </button>
+            )}
             <button
               onClick={() => onDelete(asset.muxAssetId)}
               disabled={deleteIsPending}
@@ -248,7 +263,9 @@ export default function VideoLibrary() {
 
   const assetsQuery = trpc.funnelAdmin.mux.list.useQuery();
 
-  const hasPreparing = (assetsQuery.data ?? []).some((a) => a.status === "preparing");
+  const hasPreparing = (assetsQuery.data ?? []).some(
+    (a) => a.status === "preparing" || a.captionStatus === "generating",
+  );
 
   const syncMutation = trpc.funnelAdmin.mux.syncPreparing.useMutation({
     onSuccess: (data) => {
@@ -270,6 +287,14 @@ export default function VideoLibrary() {
       toast.success("Video deleted");
     },
     onError: () => toast.error("Failed to delete video"),
+  });
+
+  const generateCaptionsMutation = trpc.funnelAdmin.mux.generateCaptions.useMutation({
+    onSuccess: () => {
+      utils.funnelAdmin.mux.list.invalidate();
+      toast.success("Caption generation started — this may take a few minutes");
+    },
+    onError: (err) => toast.error(`Failed to generate captions: ${err.message}`),
   });
 
   const statsQuery = trpc.funnelAdmin.analytics.videoEngagement.useQuery({});
@@ -366,6 +391,8 @@ export default function VideoLibrary() {
                 onCopyToClipboard={copyToClipboard}
                 onDelete={handleDelete}
                 deleteIsPending={deleteMutation.isPending}
+                onGenerateCaptions={(id) => generateCaptionsMutation.mutate({ muxAssetId: id })}
+                generateCaptionsIsPending={generateCaptionsMutation.isPending}
               />
             ))}
           </div>
