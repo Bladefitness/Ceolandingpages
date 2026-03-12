@@ -25,6 +25,8 @@ export const ENV = {
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
   muxTokenId: process.env.MUX_TOKEN_ID ?? "",
   muxTokenSecret: process.env.MUX_TOKEN_SECRET ?? "",
+  ghlWebhookMasterclassUrl: process.env.GHL_WEBHOOK_MASTERCLASS_URL ?? "",
+  ghlWebhookRoadmapOptinUrl: process.env.GHL_WEBHOOK_ROADMAP_OPTIN_URL ?? "",
 };
 
 // Validate critical env vars at startup in production

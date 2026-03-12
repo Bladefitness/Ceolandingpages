@@ -3,7 +3,7 @@ import { adminProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import { insertRoadmap, getRoadmapById, getAllRoadmaps, calculateLeadScore } from "./db";
 import { calculateBusinessHealthScore, getBenchmarkData, getGapAnalysis } from "./scoring";
-import { pushLeadToGHL } from "./ghlWebhook";
+import { pushLeadToGHL, pushMasterclassLeadToGHL, pushRoadmapOptinToGHL } from "./ghlWebhook";
 import { fireHyrosLead, getHyrosPixelsForPage } from "./trackingService";
 import { checkRateLimit, getRateLimitIdentifier } from "./rateLimit";
 import { TRPCError } from "@trpc/server";
@@ -933,6 +933,73 @@ ${input.biggestFrustration}
     .mutation(async ({ input }) => {
       const { updateLeadStatus } = await import("./db");
       await updateLeadStatus(input.id, input.status);
+      return { success: true };
+    }),
+
+  // Submit masterclass opt-in lead
+  submitMasterclassLead: publicProcedure
+    .input(z.object({
+      firstName: z.string().min(1),
+      email: z.string().email(),
+      phone: z.string().optional(),
+      practiceType: z.string().min(1),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const identifier = getRateLimitIdentifier(ctx.req);
+      const rateLimit = await checkRateLimit(identifier, { maxRequests: 10, windowMs: 60 * 60 * 1000 });
+      if (!rateLimit.allowed) {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many submissions. Please try again later.' });
+      }
+
+      // Push to GHL (async, don't block)
+      pushMasterclassLeadToGHL({
+        firstName: input.firstName,
+        email: input.email,
+        phone: input.phone,
+        practiceType: input.practiceType,
+      }).catch(err => logger.error({ err }, "Failed to push masterclass lead to GHL"));
+
+      // Push to Hyros (async, don't block)
+      getHyrosPixelsForPage("masterclass").then((hyrosPixels) => {
+        for (const px of hyrosPixels) {
+          fireHyrosLead(px.apiKey, {
+            email: input.email,
+            source: "Masterclass Opt-In",
+            tags: ["masterclass-lead"],
+          }).catch((err) => logger.error({ err }, "Hyros lead failed for masterclass"));
+        }
+      }).catch((err) => logger.error({ err }, "Failed to get Hyros pixels for masterclass"));
+
+      logger.info({ email: input.email, practiceType: input.practiceType }, "Masterclass lead submitted");
+      return { success: true };
+    }),
+
+  // Early capture: quiz opt-in after email step (Q6)
+  submitQuizEarlyCapture: publicProcedure
+    .input(z.object({
+      firstName: z.string().min(1),
+      email: z.string().email(),
+      businessName: z.string().optional(),
+      businessType: z.string().optional(),
+      biggestFrustration: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const identifier = getRateLimitIdentifier(ctx.req);
+      const rateLimit = await checkRateLimit(identifier, { maxRequests: 10, windowMs: 60 * 60 * 1000 });
+      if (!rateLimit.allowed) {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many submissions. Please try again later.' });
+      }
+
+      // Push early opt-in to GHL (async, don't block)
+      pushRoadmapOptinToGHL({
+        firstName: input.firstName,
+        email: input.email,
+        businessName: input.businessName,
+        businessType: input.businessType,
+        biggestFrustration: input.biggestFrustration,
+      }).catch(err => logger.error({ err }, "Failed to push quiz early capture to GHL"));
+
+      logger.info({ email: input.email }, "Quiz early capture submitted");
       return { success: true };
     }),
 

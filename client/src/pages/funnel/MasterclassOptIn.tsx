@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { usePixelTracking } from "@/hooks/usePixelTracking";
+import { trpc } from "@/lib/trpc";
 import { FunnelNav } from "@/components/funnel/FunnelNav";
 import {
   CheckCircle2,
@@ -24,10 +25,21 @@ import {
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
+const PRACTICE_TYPES = [
+  "IV Hydration",
+  "Med Spa",
+  "Dental Clinic",
+  "Chiropractic",
+  "Physical Therapy",
+  "Aesthetic Clinic",
+  "Other",
+] as const;
+
 const optInSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   email: z.string().email("Valid email is required"),
   phone: z.string().min(7, "Phone number is required"),
+  practiceType: z.string().min(1, "Practice type is required"),
 });
 
 type OptInValues = z.infer<typeof optInSchema>;
@@ -87,6 +99,8 @@ export default function MasterclassOptIn() {
 
   usePixelTracking("masterclass");
 
+  const submitLead = trpc.roadmap.submitMasterclassLead.useMutation();
+
   const {
     register,
     handleSubmit,
@@ -108,9 +122,17 @@ export default function MasterclassOptIn() {
   const onSubmit = async (data: OptInValues) => {
     setIsSubmitting(true);
     try {
+      // Fire webhook + tracking server-side (don't block navigation)
+      submitLead.mutate({
+        firstName: data.firstName,
+        email: data.email,
+        phone: data.phone,
+        practiceType: data.practiceType,
+      });
+
       sessionStorage.setItem(
         "masterclass_lead",
-        JSON.stringify({ firstName: data.firstName, email: data.email, phone: data.phone }),
+        JSON.stringify({ firstName: data.firstName, email: data.email, phone: data.phone, practiceType: data.practiceType }),
       );
       navigate("/fb-ads-course");
     } catch {
@@ -482,6 +504,23 @@ export default function MasterclassOptIn() {
                 />
                 {errors.phone && (
                   <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>
+                )}
+              </div>
+
+              <div>
+                <select
+                  {...register("practiceType")}
+                  className="w-full rounded-lg border border-[var(--titan-border)] bg-white px-4 py-3 text-base transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                  style={{ color: "var(--titan-text-primary)" }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>What type of practice do you run?</option>
+                  {PRACTICE_TYPES.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+                {errors.practiceType && (
+                  <p className="mt-1 text-xs text-red-500">{errors.practiceType.message}</p>
                 )}
               </div>
 

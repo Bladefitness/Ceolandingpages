@@ -496,6 +496,9 @@ export default function SmartQuiz() {
   const questionNumber = questions.slice(0, currentStep + 1).filter((q) => q.type !== "lesson" && q.type !== "insight").length;
   const progressPercent = Math.round((questionNumber / totalQuestions) * 100);
 
+  const earlyCapture = trpc.roadmap.submitQuizEarlyCapture.useMutation();
+  const earlyCapturedRef = { current: false };
+
   const generateRoadmap = trpc.roadmap.generate.useMutation({
     onSuccess: (data) => {
       navigate(`/dashboard/${data.id}`);
@@ -547,6 +550,22 @@ export default function SmartQuiz() {
         spread: progressPercent === 100 ? 100 : 70,
         origin: { y: 0.6 },
         colors: ['#E5C158', '#f4d88a', '#FFD700']
+      });
+    }
+
+    // Fire early capture webhook after email step (Q6, field="email")
+    if (
+      currentQuestion.field === "email" &&
+      formData.email &&
+      !earlyCapturedRef.current
+    ) {
+      earlyCapturedRef.current = true;
+      earlyCapture.mutate({
+        firstName: formData.firstName || "",
+        email: formData.email,
+        businessName: formData.businessName,
+        businessType: formData.businessType,
+        biggestFrustration: formData.biggestFrustration,
       });
     }
 

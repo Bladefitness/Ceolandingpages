@@ -132,6 +132,102 @@ export async function pushToZapier(payload: { firstName: string; email: string; 
   }
 }
 
+interface GHLMasterclassPayload {
+  firstName: string;
+  email: string;
+  phone?: string;
+  practiceType: string;
+}
+
+/**
+ * Push a masterclass opt-in lead to GHL via a dedicated webhook.
+ * Fires async after masterclass form submission.
+ */
+export async function pushMasterclassLeadToGHL(payload: GHLMasterclassPayload): Promise<boolean> {
+  if (!ENV.ghlWebhookMasterclassUrl) {
+    logger.debug("GHL masterclass webhook not configured, skipping");
+    return false;
+  }
+
+  try {
+    const body = {
+      firstName: payload.firstName,
+      email: payload.email,
+      phone: payload.phone || "",
+      businessType: payload.practiceType,
+      tags: "masterclass-lead",
+      source: "Masterclass Opt-In",
+    };
+
+    const response = await fetch(ENV.ghlWebhookMasterclassUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      logger.warn({ status: response.status, detail }, "GHL masterclass webhook returned non-OK");
+      return false;
+    }
+
+    logger.info({ email: payload.email }, "Masterclass lead pushed to GHL");
+    return true;
+  } catch (error) {
+    logger.error({ err: error }, "Failed to push masterclass lead to GHL");
+    return false;
+  }
+}
+
+interface GHLRoadmapOptinPayload {
+  firstName: string;
+  email: string;
+  businessType?: string;
+  biggestFrustration?: string;
+  businessName?: string;
+}
+
+/**
+ * Push an early quiz opt-in (after email step) to GHL via a dedicated webhook.
+ * Captures partial lead data before full quiz completion.
+ */
+export async function pushRoadmapOptinToGHL(payload: GHLRoadmapOptinPayload): Promise<boolean> {
+  if (!ENV.ghlWebhookRoadmapOptinUrl) {
+    logger.debug("GHL roadmap opt-in webhook not configured, skipping");
+    return false;
+  }
+
+  try {
+    const body = {
+      firstName: payload.firstName,
+      email: payload.email,
+      businessType: payload.businessType || "",
+      biggestFrustration: payload.biggestFrustration || "",
+      companyName: payload.businessName || "",
+      tags: "roadmap-optin",
+      source: "Scaling Roadmap Opt-In",
+    };
+
+    const response = await fetch(ENV.ghlWebhookRoadmapOptinUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      logger.warn({ status: response.status, detail }, "GHL roadmap opt-in webhook returned non-OK");
+      return false;
+    }
+
+    logger.info({ email: payload.email }, "Roadmap opt-in lead pushed to GHL");
+    return true;
+  } catch (error) {
+    logger.error({ err: error }, "Failed to push roadmap opt-in to GHL");
+    return false;
+  }
+}
+
 interface GHLPurchasePayload {
   firstName: string;
   email: string;
